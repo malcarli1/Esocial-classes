@@ -25,19 +25,30 @@ PROCEDURE Main()
    LOCAL oS2221, cXml
    
    // Instancia o evento S-2221 (Exame Toxicológico)
-    oS2221 := TEsocialEventoS2221():New()
+   
+   oS2221 := TEsocialEventoS2221():New()
+   
    oS2221:SetAmbiente( "2" ) // Produção Restrita
+   
    oS2221:SetEmpregador( "1", "07074096000181" )
+   
    oS2221:SetTrabalhador( "33730498819", "M12345", "101" )
+   
    oS2221:SetMedico( "Dr. Marcelo Lazzaro", "999999", "SP" )
+   
    oS2221:SetEventoToxico( "2026-06-02", "49881147000127", "TX12345678" )
+   
 
    // Gera o XML bruto limpo
+   
    cXml := oS2221:ToXml()
    
-   // Pronto para passar pela esocial_crypto para assinatura digital!
+      // Pronto para passar pela esocial_crypto para assinatura digital!
+      
    ? "XML gerado com sucesso!"
+   
 RETURN
+
 
 🏗️ Como Compilar
 O projeto utiliza o gerenciador de compilação hbmk2 nativo do Harbour. Certifique-se de vincular as bibliotecas de sistema do Windows responsáveis pela criptografia:
