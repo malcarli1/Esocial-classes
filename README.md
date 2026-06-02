@@ -44,7 +44,9 @@ PROCEDURE Main()
    cXml := oS2221:ToXml()
    
    // Pronto para passar pela esocial_crypto para assinatura digital!
-   ? "XML gerado com sucesso!"   
+   
+   ? "XML gerado com sucesso!" 
+   
 RETURN
 
 🏗️ Como Compilar
