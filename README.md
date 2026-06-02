@@ -43,12 +43,9 @@ PROCEDURE Main()
    
    cXml := oS2221:ToXml()
    
-      // Pronto para passar pela esocial_crypto para assinatura digital!
-      
-   ? "XML gerado com sucesso!"
-   
+   // Pronto para passar pela esocial_crypto para assinatura digital!
+   ? "XML gerado com sucesso!"   
 RETURN
-
 
 🏗️ Como Compilar
 O projeto utiliza o gerenciador de compilação hbmk2 nativo do Harbour. Certifique-se de vincular as bibliotecas de sistema do Windows responsáveis pela criptografia:
