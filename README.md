@@ -18,13 +18,14 @@ Compatibilidade Total: Pronto para compilação com Harbour 3.2+ utilizando o co
 Integrar os eventos do eSocial ao seu sistema ERP se resume a poucas linhas de código:
 
 Snippet de código
+
 #include "hbclass.ch"
 
 PROCEDURE Main()
    LOCAL oS2221, cXml
-
+   
    // Instancia o evento S-2221 (Exame Toxicológico)
-   oS2221 := TEsocialEventoS2221():New()
+    oS2221 := TEsocialEventoS2221():New()
    oS2221:SetAmbiente( "2" ) // Produção Restrita
    oS2221:SetEmpregador( "1", "07074096000181" )
    oS2221:SetTrabalhador( "33730498819", "M12345", "101" )
