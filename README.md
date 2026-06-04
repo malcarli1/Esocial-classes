@@ -30,13 +30,13 @@ PROCEDURE Main()
    
    oS2221:SetAmbiente( "2" ) // Produção Restrita
    
-   oS2221:SetEmpregador( "1", "07074096000181" )
+   oS2221:SetEmpregador( "1", "99999999999999" )
    
-   oS2221:SetTrabalhador( "33730498819", "M12345", "101" )
+   oS2221:SetTrabalhador( "122434108269", "M12345", "101" )
    
    oS2221:SetMedico( "Dr. Marcelo Lazzaro", "999999", "SP" )
    
-   oS2221:SetEventoToxico( "2026-06-02", "49881147000127", "TX12345678" )
+   oS2221:SetEventoToxico( "2026-06-02", "68467240000134", "TX12345678" )
    
 
    // Gera o XML bruto limpo
