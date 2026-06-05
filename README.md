@@ -1,7 +1,7 @@
 # Esocial-classes
 
 eSocial Bridge for Harbour 🚀
-Uma biblioteca nativa e de alta performance desenvolvida em Harbour para geração, validação e assinatura digital dos eventos de SST (Saúde e Segurança do Trabalho) e demais obrigações do eSocial.
+Uma biblioteca nativa e de alta performance desenvolvida em Harbour para geração, validação e assinatura digital dos eventos de SST (Saúde e Segurança do Trabalho) e demais obrigações do eSocial. Contempla TODOS os eventos.
 
 O grande diferencial deste projeto é a ponte criptográfica (esocial_crypto.prg), que realiza a assinatura digital SHA256 utilizando diretamente as APIs nativas do ecossistema Windows (CryptoAPI). Isso elimina completamente a dependência de executáveis externos (como OpenSSL via linha de comando ou utilitários de terceiros), garantindo maior velocidade, segurança e facilidade de distribuição do seu sistema.
 
