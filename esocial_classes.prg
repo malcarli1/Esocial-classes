@@ -71,7 +71,7 @@ METHOD EnableXsdValidation( lAtivar ) CLASS TEsocialConfig
 RETURN Self
 
 CLASS TEsocialEventoS2220
-   VAR cVersaoSchema   AS Character INIT [v_S_01_03_00]
+***   VAR cVersaoSchema   AS Character INIT [v_S_01_03_00]
    VAR cId             AS Character INIT ""
    VAR cTpAmb          AS Character INIT "2"
    VAR cProcEmi        AS Character INIT "1"
@@ -806,14 +806,14 @@ METHOD ToXml() CLASS TEsocialEventoS2240
 RETURN cXml
 
 CLASS TEsocialEventoXml
-   VAR cVersaoSchema AS Character INIT [v_S_01_03_00]
-   VAR cId           AS Character INIT ""
-   VAR cSchemaEvento AS Character INIT ""
-   VAR cNomeEvento   AS Character INIT ""
-   VAR cConteudo     AS Character INIT ""
+   VAR cVersaoSchema AS Character  INIT [v_S_01_03_00]
+   VAR cId           AS Character  INIT ""
+   VAR cSchemaEvento AS Character  INIT ""
+   VAR cNomeEvento   AS Character  INIT ""
+   VAR cConteudo     AS Character  INIT ""
    VAR cTipoIdeEvento AS Character INIT ""
    VAR aCampos                     INIT {}
-   VAR cCodigoEvento AS Character INIT ""
+   VAR cCodigoEvento AS Character  INIT ""
    VAR cTemplatePath  AS Character INIT "templates_eventos"
 
    METHOD New()
@@ -3043,11 +3043,50 @@ RETURN cOut
 CLASS TEsocialClient
    VAR oConfig AS OBJECT
 
-   METHOD New()                // oConfig 
-   METHOD EnviarLoteAssinado() // cArquivoXml 
+   METHOD New()                // oConfig
+   METHOD EnviarLoteAssinado() // cArquivoXml
    METHOD ConsultarLote()      // cProtocolo
-   METHOD SoapEnvio()          // cXmlAssinado 
-   METHOD SoapConsulta()       // cProtocolo 
+   METHOD ConsultarLoteDetalhado() // cProtocolo
+   METHOD SoapEnvio()          // cXmlAssinado
+   METHOD SoapConsulta()       // cProtocolo
+ENDCLASS
+
+CLASS TEsocialRetornoOcorrencia
+   VAR cXml         INIT ""
+   VAR nTipo        INIT 0
+   VAR cCodigo      INIT ""
+   VAR cDescricao   INIT ""
+   VAR cLocalizacao INIT ""
+
+   METHOD New() // cXml
+ENDCLASS
+
+CLASS TEsocialRetornoEvento
+   VAR cId           INIT ""
+   VAR nCdResposta   INIT 0
+   VAR cDescResposta INIT ""
+   VAR aOcorrencias  INIT {}
+   VAR cXml          INIT ""
+
+   METHOD New() // cXml
+   METHOD Ok()
+   METHOD GetOcorrenciaCount()
+   METHOD GetOcorrencia() // nIndex zero-based igual Unimake
+ENDCLASS
+
+CLASS TEsocialRetornoLote
+   VAR nCdResposta   INIT 0
+   VAR cDescResposta INIT ""
+   VAR cProtocolo    INIT ""
+   VAR aEventos      INIT {}
+   VAR cXml          INIT ""
+
+   METHOD New() // cXml
+   METHOD LoteOk()
+   METHOD TodosEventosOk()
+   METHOD GetEventoCount()
+   METHOD GetEvento() // nIndex zero-based igual Unimake
+   METHOD ToTexto()
 ENDCLASS
 
 CLASS TEsocialLote
@@ -3190,6 +3229,11 @@ METHOD ConsultarLote( cProtocolo ) CLASS TEsocialClient
    EsocialMemoWritUtf8( "Retorno_eSocial.xml", cRetorno )
 RETURN cRetorno
 
+
+METHOD ConsultarLoteDetalhado( cProtocolo ) CLASS TEsocialClient
+   LOCAL cRetorno
+   cRetorno := ::ConsultarLote( cProtocolo )
+RETURN TEsocialRetornoLote():New( cRetorno )
 METHOD SoapEnvio( cXmlAssinado ) CLASS TEsocialClient
    LOCAL cEnvelope
    cEnvelope := '<?xml version="1.0" encoding="UTF-8"?>'
@@ -3292,6 +3336,187 @@ METHOD fCertificadoPfx(cCertificadoArquivo, cCertificadoSenha)
       Endif
    Endif
 Return (Nil)
+
+
+METHOD New( cXml ) CLASS TEsocialRetornoOcorrencia
+   ::cXml := hb_DefaultValue( cXml, "" )
+   ::nTipo := Val( EsocialExtrairTag( ::cXml, "tipo" ) )
+   ::cCodigo := EsocialExtrairTag( ::cXml, "codigo" )
+   ::cDescricao := EsocialExtrairTag( ::cXml, "descricao" )
+   ::cLocalizacao := EsocialExtrairTag( ::cXml, "localizacao" )
+RETURN Self
+
+METHOD New( cXml ) CLASS TEsocialRetornoEvento
+   LOCAL cProc, cOcorr, nPos := 1
+
+   ::cXml := hb_DefaultValue( cXml, "" )
+   ::cId := EsocialXmlAttrValue( ::cXml, "Id" )
+   IF Empty( ::cId )
+      ::cId := EsocialXmlAttrValue( ::cXml, "ID" )
+   ENDIF
+
+   cProc := EsocialXmlPrimeiroBloco( ::cXml, "processamento" )
+   IF Empty( cProc )
+      cProc := ::cXml
+   ENDIF
+
+   ::nCdResposta := Val( EsocialExtrairTag( cProc, "cdResposta" ) )
+   ::cDescResposta := EsocialExtrairTag( cProc, "descResposta" )
+   ::aOcorrencias := {}
+
+   DO WHILE .T.
+      cOcorr := EsocialXmlBloco( cProc, "ocorrencia", nPos, @nPos )
+      IF Empty( cOcorr )
+         EXIT
+      ENDIF
+      AAdd( ::aOcorrencias, TEsocialRetornoOcorrencia():New( cOcorr ) )
+   ENDDO
+RETURN Self
+
+METHOD Ok() CLASS TEsocialRetornoEvento
+RETURN ::nCdResposta == 201
+
+METHOD GetOcorrenciaCount() CLASS TEsocialRetornoEvento
+RETURN Len( ::aOcorrencias )
+
+METHOD GetOcorrencia( nIndex ) CLASS TEsocialRetornoEvento
+   LOCAL nPos := hb_DefaultValue( nIndex, 0 ) + 1
+   IF nPos < 1 .OR. nPos > Len( ::aOcorrencias )
+      RETURN Nil
+   ENDIF
+RETURN ::aOcorrencias[ nPos ]
+
+METHOD New( cXml ) CLASS TEsocialRetornoLote
+   LOCAL cLote, cStatus, cEvento, nPos := 1
+
+   ::cXml := hb_DefaultValue( cXml, "" )
+   cLote := EsocialXmlPrimeiroBloco( ::cXml, "retornoProcessamentoLoteEventos" )
+   IF Empty( cLote )
+      cLote := ::cXml
+   ENDIF
+
+   cStatus := EsocialXmlPrimeiroBloco( cLote, "status" )
+   IF Empty( cStatus )
+      cStatus := cLote
+   ENDIF
+
+   ::nCdResposta := Val( EsocialExtrairTag( cStatus, "cdResposta" ) )
+   ::cDescResposta := EsocialExtrairTag( cStatus, "descResposta" )
+   ::cProtocolo := EsocialExtrairTag( cLote, "protocoloEnvio" )
+   ::aEventos := {}
+
+   DO WHILE .T.
+      cEvento := EsocialXmlBloco( cLote, "retornoEvento", nPos, @nPos )
+      IF Empty( cEvento )
+         EXIT
+      ENDIF
+      AAdd( ::aEventos, TEsocialRetornoEvento():New( cEvento ) )
+   ENDDO
+RETURN Self
+
+METHOD LoteOk() CLASS TEsocialRetornoLote
+RETURN ::nCdResposta == 201
+
+METHOD TodosEventosOk() CLASS TEsocialRetornoLote
+   LOCAL nI
+   IF Len( ::aEventos ) == 0
+      RETURN .F.
+   ENDIF
+   FOR nI := 1 TO Len( ::aEventos )
+      IF ! ::aEventos[ nI ]:Ok()
+         RETURN .F.
+      ENDIF
+   NEXT
+RETURN .T.
+
+METHOD GetEventoCount() CLASS TEsocialRetornoLote
+RETURN Len( ::aEventos )
+
+METHOD GetEvento( nIndex ) CLASS TEsocialRetornoLote
+   LOCAL nPos := hb_DefaultValue( nIndex, 0 ) + 1
+   IF nPos < 1 .OR. nPos > Len( ::aEventos )
+      RETURN Nil
+   ENDIF
+RETURN ::aEventos[ nPos ]
+
+METHOD ToTexto() CLASS TEsocialRetornoLote
+   LOCAL cTexto, nI, nX, oEvento, oOcorr
+
+   cTexto := "Lote: " + AllTrim( Str( ::nCdResposta ) ) + " - " + ::cDescResposta + hb_Eol()
+   cTexto += "Protocolo: " + ::cProtocolo + hb_Eol()
+   cTexto += "Eventos: " + AllTrim( Str( Len( ::aEventos ) ) ) + hb_Eol()
+
+   FOR nI := 1 TO Len( ::aEventos )
+      oEvento := ::aEventos[ nI ]
+      cTexto += "Evento " + AllTrim( Str( nI ) ) + ": " + oEvento:cId + " | " + AllTrim( Str( oEvento:nCdResposta ) ) + " - " + oEvento:cDescResposta + hb_Eol()
+      FOR nX := 1 TO oEvento:GetOcorrenciaCount()
+         oOcorr := oEvento:GetOcorrencia( nX - 1 )
+         cTexto += "  Ocorrencia " + AllTrim( Str( nX ) ) + ": tipo=" + AllTrim( Str( oOcorr:nTipo ) ) + ", codigo=" + oOcorr:cCodigo + ", descricao=" + oOcorr:cDescricao + ", localizacao=" + oOcorr:cLocalizacao + hb_Eol()
+      NEXT
+   NEXT
+RETURN cTexto
+
+FUNCTION EsocialRetornoLoteFromXml( cXml )
+RETURN TEsocialRetornoLote():New( cXml )
+
+FUNCTION EsocialXmlPrimeiroBloco( cXml, cTag )
+   LOCAL nNext := 1
+RETURN EsocialXmlBloco( cXml, cTag, 1, @nNext )
+
+FUNCTION EsocialXmlBloco( cXml, cTag, nFrom, nNext )
+   LOCAL nStart, nTag, nOpenEnd, nClose, nEnd
+
+   nNext := hb_DefaultValue( nFrom, 1 )
+   nStart := hb_At( "<" + cTag, cXml, nNext )
+   IF nStart == 0
+      nTag := hb_At( ":" + cTag, cXml, nNext )
+      IF nTag > 0
+         nStart := Rat( "<", Left( cXml, nTag ) )
+      ENDIF
+   ENDIF
+   IF nStart == 0
+      RETURN ""
+   ENDIF
+
+   nOpenEnd := hb_At( ">", cXml, nStart )
+   IF nOpenEnd == 0
+      RETURN ""
+   ENDIF
+   IF SubStr( cXml, nOpenEnd - 1, 2 ) == "/>"
+      nNext := nOpenEnd + 1
+      RETURN SubStr( cXml, nStart, nOpenEnd - nStart + 1 )
+   ENDIF
+
+   nClose := hb_At( "</" + cTag + ">", cXml, nOpenEnd )
+   IF nClose == 0
+      nTag := hb_At( ":" + cTag + ">", cXml, nOpenEnd )
+      IF nTag > 0
+         nClose := Rat( "</", Left( cXml, nTag ) )
+      ENDIF
+   ENDIF
+   IF nClose == 0
+      RETURN ""
+   ENDIF
+
+   nEnd := hb_At( ">", cXml, nClose )
+   IF nEnd == 0
+      RETURN ""
+   ENDIF
+   nNext := nEnd + 1
+RETURN SubStr( cXml, nStart, nEnd - nStart + 1 )
+
+FUNCTION EsocialXmlAttrValue( cXml, cAttr )
+   LOCAL nStart, nEnd
+   nStart := hb_At( cAttr + '="', cXml )
+   IF nStart == 0
+      RETURN ""
+   ENDIF
+   nStart += Len( cAttr ) + 2
+   nEnd := hb_At( '"', cXml, nStart )
+   IF nEnd == 0
+      RETURN ""
+   ENDIF
+RETURN SubStr( cXml, nStart, nEnd - nStart )
 
 FUNCTION EsocialExtrairTag( cXml, cTag )
    LOCAL nStart, nClose, cResult := ""
@@ -3437,8 +3662,8 @@ FUNCTION EsocialTemplateArquivo( cCodigo, cTemplatePath )
    IF Len( aInfo ) < 2
       RETURN ""
    ENDIF
-   IF Right( cBase, 1 ) != "\" .AND. Right( cBase, 1 ) != "/"
-      cBase += "\"
+   IF Right( cBase, 1 ) != "" .AND. Right( cBase, 1 ) != "/"
+      cBase += ""
    ENDIF
 RETURN cBase + aInfo[ 1 ] + "_" + aInfo[ 2 ] + ".xml"
 
@@ -3837,8 +4062,8 @@ FUNCTION EsocialValidarEventoXsd( cXml, cXsdPath )
    ENDIF
 
    cSchemaPath := cXsdPath
-   IF Right( cSchemaPath, 1 ) != "\" .AND. Right( cSchemaPath, 1 ) != "/"
-      cSchemaPath += "\"
+   IF Right( cSchemaPath, 1 ) != "" .AND. Right( cSchemaPath, 1 ) != "/"
+      cSchemaPath += ""
    ENDIF
    cSchemaPath += cSchemaFile
 
