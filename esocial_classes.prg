@@ -1,11 +1,11 @@
 /*****************************************************************************
- * SISTEMA  : ROTINA EVENTUAL                                                *
+ * SISTEMA  : SISTEMA DE GESTÃO OCUPACIONAL                                  *
  * PROGRAMA : ESOCIAL_CLASSES.PRG                                            *
  * OBJETIVO : Gerar, Assinar e Enviar Arquivos do eSocial                    *
  * AUTOR    : Franklin Brasil                                                *
  * ALTERADO : Marcelo Antonio Lazzaro Carli                                  *
- * VAR     : 29.05.2026                                                     *
- * ULT. ALT.: 02.06.2026                                                     *
+ * DATA     : 29.05.2026                                                     *
+ * ULT. ALT.: 05.06.2026                                                     *
  *****************************************************************************/
 #include "hbclass.ch"
 
@@ -292,9 +292,9 @@ METHOD ToXml() CLASS TEsocialEventoS3000
 RETURN cXml
 
 CLASS TEsocialEventoS2221 FROM TEsocialEventoS2220
-   VAR cDtExm       AS Character INIT ""                                       // Data da RealizaÃ§Ã£o do Exame ToxicolÃ³gico
-   VAR cCnpjLab     AS Character INIT ""                                       // Cnpj do LaboratÃ³rio ResponsÃ¡vel
-   VAR cCodSeqExame AS Character INIT ""                                       // CÃ³digo Sequencial do Exame - AA999999999
+   VAR cDtExm       AS Character INIT ""                                       // Data da Realização do Exame Toxicológico
+   VAR cCnpjLab     AS Character INIT ""                                       // Cnpj do Laboratório Responsável
+   VAR cCodSeqExame AS Character INIT ""                                       // Código Sequencial do Exame - AA999999999
 
    METHOD New()
    METHOD SetEventoToxico()                                                    // cDtExm, cCnpjLab, cCodSeqExame
@@ -1233,6 +1233,7 @@ CLASS TEsocialEventoAdmissao FROM TEsocialEventoXml
    METHOD SetRemuneracao()
    METHOD SetDuracao()
 ENDCLASS
+
 METHOD New() CLASS TEsocialEventoAdmissao
    ::Super:New( "evtAdmissao", "evtAdmissao" )
 RETURN Self
@@ -4119,3 +4120,546 @@ FUNCTION SoNumeroCnpj(cTxt)
        EndIf
    Next
 Return (cSoNumeros)
+
+CLASS TEsocialCertificado
+   // Configurações iniciais básicas
+   VAR cCertificado                 AS Character INIT [NENHUM]                                 // Nome do certificado (Somente o Nome)
+   VAR cCertNomecer                 AS Character INIT []                                       // Nome do certificado retornado (Nome completo CN=Nome do certificado, .....)
+   VAR cCertEmissor                 AS Character INIT []                                       // Nome do Emissor do certificado retornado
+   VAR dCertDataini                              INIT Ctod([])                                 // Data Inicial de Validade do certificado retornado
+   VAR dCertDatafim                              INIT Ctod([])                                 // Data Final de Validade do certificado retornado
+   VAR cCertImprDig                 AS Character INIT []                                       // Impressão Digital do certificado retornado
+   VAR cCertSerial                  AS Character INIT []                                       // Número Serial do certificado retornado
+   VAR nCertVersao                  AS Num       INIT 0                                        // Versão do certificado retornado
+   VAR lCertInstall                 AS Logical   INIT .F.                                      // Verifica se o Certificado está Instalado no Repositório do Windows
+   VAR lCertVencido                 AS Logical   INIT .F.                                      // Verifica se o Certificado está Vencido
+
+   // Métodos Operacionais
+   METHOD fCertificadoNative()
+   METHOD fCertificadoPfx()                                                                    // cCertificadoArquivo, cCertificadoSenha
+ENDCLASS
+
+METHOD fCertificadoNative()
+   Local cDados:= SelecionarCertificadoNative()
+
+   If Empty(cDados) .or. Left(cDados, 5) == [ERRO_]
+      Return (Nil)
+   Endif
+
+   ::cCertNomecer:= ::cCertificado:= CertNativeToken(cDados, 1)
+   ::cCertEmissor:= CertNativeToken(cDados, 2)
+   ::dCertDataini:= StoD(CertNativeToken(cDados, 3))
+   ::dCertDatafim:= StoD(CertNativeToken(cDados, 4))
+   ::cCertImprDig:= CertNativeToken(cDados, 5)
+   ::cCertSerial := CertNativeToken(cDados, 6)
+   ::nCertVersao := Val(CertNativeToken(cDados, 7))
+   ::lCertInstall:= CertNativeToken(cDados, 8) == [1]
+
+   If Dtos(::dCertDatafim) < Dtos(Date())
+      ::lCertVencido:= .T.
+   Else
+      ::lCertVencido:= .F.
+   Endif
+
+   If [CN=] $ ::cCertificado
+      ::cCertificado:= Substr(::cCertificado, At([CN=], ::cCertificado) + 3)
+      If [,] $ ::cCertificado
+         ::cCertificado:= Substr(::cCertificado, 1, At([,], ::cCertificado) - 1)
+      Endif
+   Endif
+Return (Nil)
+
+* ---------> Metodo para ler dados do PFX sem CAPICOM e sem instalar <-------- *
+METHOD fCertificadoPfx(cCertificadoArquivo, cCertificadoSenha) 
+   Local cDados:= LerCertificadoPfxNative(cCertificadoArquivo, cCertificadoSenha)
+
+   If Empty(cDados) .or. Left(cDados, 5) == [ERRO_]
+      Return (Nil)
+   Endif
+
+   ::cCertNomecer:= ::cCertificado:= CertNativeToken(cDados, 1)
+   ::cCertEmissor:= CertNativeToken(cDados, 2)
+   ::dCertDataini:= StoD(CertNativeToken(cDados, 3))
+   ::dCertDatafim:= StoD(CertNativeToken(cDados, 4))
+   ::cCertImprDig:= CertNativeToken(cDados, 5)
+   ::cCertSerial := CertNativeToken(cDados, 6)
+   ::nCertVersao := Val(CertNativeToken(cDados, 7))
+   ::lCertInstall:= CertNativeToken(cDados, 8) == [1]
+
+   If Dtos(::dCertDatafim) < Dtos(Date())
+      ::lCertVencido:= .T.
+   Else
+      ::lCertVencido:= .F.
+   Endif
+
+   If [CN=] $ ::cCertificado
+      ::cCertificado:= Substr(::cCertificado, At([CN=], ::cCertificado) + 3)
+      If [,] $ ::cCertificado
+         ::cCertificado:= Substr(::cCertificado, 1, At([,], ::cCertificado) - 1)
+      Endif
+   Endif
+Return (Nil)
+
+Static Function CertNativeToken(cDados, nToken)
+   Local nPos:= 1, nStart:= 1, nAtual:= 1
+
+   Do While nAtual < nToken
+      nPos:= At(Chr(9), SubStr(cDados, nStart))
+      If nPos == 0
+         Return []
+      Endif
+      nStart += nPos
+      nAtual++
+   Enddo
+
+   nPos:= At(Chr(9), SubStr(cDados, nStart))
+   If nPos == 0
+      Return SubStr(cDados, nStart)
+   Endif
+Return SubStr(cDados, nStart, nPos - 1)
+
+#pragma BEGINDUMP
+
+#include "hbapi.h"
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <wincrypt.h>
+#include <ctype.h>
+#include <string.h>
+
+#ifdef _MSC_VER
+#pragma comment( lib, "advapi32.lib" )
+#pragma comment( lib, "crypt32.lib" )
+#pragma comment( lib, "cryptui.lib" )
+#endif
+
+#ifndef CRYPT_STRING_NOCRLF
+#define CRYPT_STRING_NOCRLF 0x40000000
+#endif
+
+PCCERT_CONTEXT WINAPI CryptUIDlgSelectCertificateFromStore(
+   HCERTSTORE hCertStore,
+   HWND hwnd,
+   LPCWSTR pwszTitle,
+   LPCWSTR pwszDisplayString,
+   DWORD dwDontUseColumn,
+   DWORD dwFlags,
+   void * pvReserved );
+
+static void nfse_hex_from_blob_reversed( const BYTE * pData, DWORD cbData, char * out )
+{
+   static const char * hex = "0123456789ABCDEF";
+   DWORD i, j = 0;
+
+   for( i = cbData; i > 0; --i )
+   {
+      BYTE b = pData[ i - 1 ];
+      out[ j++ ] = hex[ ( b >> 4 ) & 0x0F ];
+      out[ j++ ] = hex[ b & 0x0F ];
+   }
+   out[ j ] = '\0';
+}
+
+static void nfse_hex_from_blob_direct( const BYTE * pData, DWORD cbData, char * out )
+{
+   static const char * hex = "0123456789ABCDEF";
+   DWORD i, j = 0;
+
+   for( i = 0; i < cbData; ++i )
+   {
+      BYTE b = pData[ i ];
+      out[ j++ ] = hex[ ( b >> 4 ) & 0x0F ];
+      out[ j++ ] = hex[ b & 0x0F ];
+   }
+   out[ j ] = '\0';
+}
+
+static void nfse_normalize_serial( const char * in, char * out, DWORD outSize )
+{
+   DWORD j = 0;
+
+   while( *in && j + 1 < outSize )
+   {
+      unsigned char ch = ( unsigned char ) *in++;
+      if( isxdigit( ch ) )
+         out[ j++ ] = ( char ) toupper( ch );
+   }
+   out[ j ] = '\0';
+}
+
+static void nfse_return_last_error( const char * prefix )
+{
+   char msg[ 128 ];
+   wsprintfA( msg, "%s WindowsError=%lu", prefix, GetLastError() );
+   hb_retc( msg );
+}
+
+static void nfse_filetime_to_yyyymmdd( const FILETIME * ft, char * out )
+{
+   SYSTEMTIME st;
+   FileTimeToSystemTime( ft, &st );
+   wsprintfA( out, "%04u%02u%02u", st.wYear, st.wMonth, st.wDay );
+}
+
+static void nfse_append_field( char * out, DWORD outSize, const char * value, BOOL withTab )
+{
+   if( value )
+      lstrcatA( out, value );
+   if( withTab )
+      lstrcatA( out, "\t" );
+}
+
+HB_FUNC( SELECIONARCERTIFICADONATIVE )
+{
+   HCERTSTORE hStore = NULL;
+   PCCERT_CONTEXT pCert = NULL;
+   DWORD needed = 0;
+   char subject[ 1024 ];
+   char issuer[ 1024 ];
+   char validFrom[ 16 ];
+   char validTo[ 16 ];
+   char thumb[ 128 ];
+   char serial[ 256 ];
+   char version[ 16 ];
+   char archived[ 2 ];
+   BYTE hash[ 64 ];
+   DWORD hashLen = sizeof( hash );
+   char result[ 4096 ];
+
+   subject[ 0 ] = issuer[ 0 ] = validFrom[ 0 ] = validTo[ 0 ] = '\0';
+   thumb[ 0 ] = serial[ 0 ] = version[ 0 ] = archived[ 0 ] = result[ 0 ] = '\0';
+
+   hStore = CertOpenStore( CERT_STORE_PROV_SYSTEM_A, 0, 0,
+                           CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_READONLY_FLAG, "MY" );
+   if( ! hStore )
+   {
+      nfse_return_last_error( "ERRO_CERTIFICADO: nao foi possivel abrir o repositorio MY." );
+      return;
+   }
+
+   pCert = CryptUIDlgSelectCertificateFromStore( hStore, NULL,
+                                                 L"Selecione o certificado para uso da NFS-e",
+                                                 L"Selecione o certificado digital",
+                                                 0, 0, NULL );
+   if( ! pCert )
+   {
+      CertCloseStore( hStore, 0 );
+      hb_retc( "ERRO_CERTIFICADO: certificado nao selecionado." );
+      return;
+   }
+
+   CertNameToStrA( X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+                   &pCert->pCertInfo->Subject,
+                   CERT_X500_NAME_STR | CERT_NAME_STR_REVERSE_FLAG,
+                   subject, sizeof( subject ) );
+
+   CertNameToStrA( X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+                   &pCert->pCertInfo->Issuer,
+                   CERT_X500_NAME_STR | CERT_NAME_STR_REVERSE_FLAG,
+                   issuer, sizeof( issuer ) );
+
+   nfse_filetime_to_yyyymmdd( &pCert->pCertInfo->NotBefore, validFrom );
+   nfse_filetime_to_yyyymmdd( &pCert->pCertInfo->NotAfter, validTo );
+
+   if( CertGetCertificateContextProperty( pCert, CERT_HASH_PROP_ID, hash, &hashLen ) )
+      nfse_hex_from_blob_direct( hash, hashLen, thumb );
+
+   nfse_hex_from_blob_reversed( pCert->pCertInfo->SerialNumber.pbData,
+                                pCert->pCertInfo->SerialNumber.cbData,
+                                serial );
+
+   wsprintfA( version, "%lu", pCert->pCertInfo->dwVersion + 1 );
+
+   needed = 0;
+   archived[ 0 ] = CertGetCertificateContextProperty( pCert, CERT_ARCHIVED_PROP_ID, NULL, &needed ) ? '1' : '0';
+   archived[ 1 ] = '\0';
+
+   nfse_append_field( result, sizeof( result ), subject, TRUE );
+   nfse_append_field( result, sizeof( result ), issuer, TRUE );
+   nfse_append_field( result, sizeof( result ), validFrom, TRUE );
+   nfse_append_field( result, sizeof( result ), validTo, TRUE );
+   nfse_append_field( result, sizeof( result ), thumb, TRUE );
+   nfse_append_field( result, sizeof( result ), serial, TRUE );
+   nfse_append_field( result, sizeof( result ), version, TRUE );
+   nfse_append_field( result, sizeof( result ), archived, FALSE );
+
+   hb_retc( result );
+
+   CertFreeCertificateContext( pCert );
+   CertCloseStore( hStore, 0 );
+}
+
+HB_FUNC( LERCERTIFICADOPFXNATIVE )
+{
+   const char * fileName = hb_parc( 1 );
+   const char * password = hb_parc( 2 );
+   HANDLE hFile = INVALID_HANDLE_VALUE;
+   DWORD fileSize = 0;
+   DWORD bytesRead = 0;
+   BYTE * fileData = NULL;
+   CRYPT_DATA_BLOB pfxBlob;
+   WCHAR wPassword[ 512 ];
+   HCERTSTORE hPfxStore = NULL;
+   PCCERT_CONTEXT pCert = NULL;
+   DWORD needed = 0;
+   char subject[ 1024 ];
+   char issuer[ 1024 ];
+   char validFrom[ 16 ];
+   char validTo[ 16 ];
+   char thumb[ 128 ];
+   char serial[ 256 ];
+   char version[ 16 ];
+   char archived[ 2 ];
+   BYTE hash[ 64 ];
+   DWORD hashLen = sizeof( hash );
+   char result[ 4096 ];
+
+   if( ! fileName || ! *fileName )
+   {
+      hb_retc( "ERRO_PFX: arquivo PFX nao informado." );
+      return;
+   }
+
+   subject[ 0 ] = issuer[ 0 ] = validFrom[ 0 ] = validTo[ 0 ] = '\0';
+   thumb[ 0 ] = serial[ 0 ] = version[ 0 ] = archived[ 0 ] = result[ 0 ] = '\0';
+
+   hFile = CreateFileA( fileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
+   if( hFile == INVALID_HANDLE_VALUE )
+   {
+      nfse_return_last_error( "ERRO_PFX: nao foi possivel abrir o arquivo." );
+      return;
+   }
+
+   fileSize = GetFileSize( hFile, NULL );
+   if( fileSize == INVALID_FILE_SIZE || fileSize == 0 )
+   {
+      CloseHandle( hFile );
+      hb_retc( "ERRO_PFX: arquivo PFX vazio ou invalido." );
+      return;
+   }
+
+   fileData = ( BYTE * ) hb_xgrab( fileSize );
+   if( ! ReadFile( hFile, fileData, fileSize, &bytesRead, NULL ) || bytesRead != fileSize )
+   {
+      hb_xfree( fileData );
+      CloseHandle( hFile );
+      nfse_return_last_error( "ERRO_PFX: falha ao ler o arquivo." );
+      return;
+   }
+   CloseHandle( hFile );
+
+   pfxBlob.cbData = fileSize;
+   pfxBlob.pbData = fileData;
+
+   MultiByteToWideChar( CP_ACP, 0, password ? password : "", -1, wPassword, sizeof( wPassword ) / sizeof( WCHAR ) );
+
+   hPfxStore = PFXImportCertStore( &pfxBlob, wPassword, 0 );
+   hb_xfree( fileData );
+
+   if( ! hPfxStore )
+   {
+      nfse_return_last_error( "ERRO_PFX: senha invalida ou falha ao importar PFX em memoria." );
+      return;
+   }
+
+   pCert = CertEnumCertificatesInStore( hPfxStore, NULL );
+   if( ! pCert )
+   {
+      CertCloseStore( hPfxStore, 0 );
+      hb_retc( "ERRO_PFX: nenhum certificado encontrado no PFX." );
+      return;
+   }
+
+   CertNameToStrA( X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+                   &pCert->pCertInfo->Subject,
+                   CERT_X500_NAME_STR | CERT_NAME_STR_REVERSE_FLAG,
+                   subject, sizeof( subject ) );
+
+   CertNameToStrA( X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+                   &pCert->pCertInfo->Issuer,
+                   CERT_X500_NAME_STR | CERT_NAME_STR_REVERSE_FLAG,
+                   issuer, sizeof( issuer ) );
+
+   nfse_filetime_to_yyyymmdd( &pCert->pCertInfo->NotBefore, validFrom );
+   nfse_filetime_to_yyyymmdd( &pCert->pCertInfo->NotAfter, validTo );
+
+   if( CertGetCertificateContextProperty( pCert, CERT_HASH_PROP_ID, hash, &hashLen ) )
+      nfse_hex_from_blob_direct( hash, hashLen, thumb );
+
+   nfse_hex_from_blob_reversed( pCert->pCertInfo->SerialNumber.pbData,
+                                pCert->pCertInfo->SerialNumber.cbData,
+                                serial );
+
+   wsprintfA( version, "%lu", pCert->pCertInfo->dwVersion + 1 );
+
+   needed = 0;
+   archived[ 0 ] = CertGetCertificateContextProperty( pCert, CERT_ARCHIVED_PROP_ID, NULL, &needed ) ? '1' : '0';
+   archived[ 1 ] = '\0';
+
+   nfse_append_field( result, sizeof( result ), subject, TRUE );
+   nfse_append_field( result, sizeof( result ), issuer, TRUE );
+   nfse_append_field( result, sizeof( result ), validFrom, TRUE );
+   nfse_append_field( result, sizeof( result ), validTo, TRUE );
+   nfse_append_field( result, sizeof( result ), thumb, TRUE );
+   nfse_append_field( result, sizeof( result ), serial, TRUE );
+   nfse_append_field( result, sizeof( result ), version, TRUE );
+   nfse_append_field( result, sizeof( result ), archived, FALSE );
+
+   hb_retc( result );
+
+   CertCloseStore( hPfxStore, 0 );
+}
+
+HB_FUNC( ASSINARRPSSPNATIVE )
+{
+   const char * serialParam = hb_parc( 1 );
+   const BYTE * textParam   = ( const BYTE * ) hb_parc( 2 );
+   DWORD textLen            = ( DWORD ) hb_parclen( 2 );
+   char serialBusca[ 128 ];
+   HCERTSTORE hStore = NULL;
+   PCCERT_CONTEXT pCert = NULL;
+   PCCERT_CONTEXT pFound = NULL;
+   HCRYPTPROV hKey = 0;
+   DWORD dwKeySpec = 0;
+   BOOL mustFreeKey = FALSE;
+   HCRYPTHASH hHash = 0;
+   BYTE * sig = NULL;
+   DWORD sigLen = 0;
+   char * base64 = NULL;
+   DWORD base64Len = 0;
+   DWORD i;
+
+   if( ! serialParam || ! *serialParam || ! textParam )
+   {
+      hb_retc( "ERRO_ASSINATURA_RPS: parametros invalidos." );
+      return;
+   }
+
+   nfse_normalize_serial( serialParam, serialBusca, sizeof( serialBusca ) );
+
+   hStore = CertOpenStore( CERT_STORE_PROV_SYSTEM_A, 0, 0,
+                           CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_READONLY_FLAG, "MY" );
+   if( ! hStore )
+   {
+      nfse_return_last_error( "ERRO_ASSINATURA_RPS: nao foi possivel abrir o repositorio MY." );
+      return;
+   }
+
+   while( ( pCert = CertEnumCertificatesInStore( hStore, pCert ) ) != NULL )
+   {
+      DWORD cbSerial = pCert->pCertInfo->SerialNumber.cbData;
+      char serialRev[ 256 ];
+      char serialDir[ 256 ];
+
+      if( cbSerial * 2 + 1 > sizeof( serialRev ) )
+         continue;
+
+      nfse_hex_from_blob_reversed( pCert->pCertInfo->SerialNumber.pbData, cbSerial, serialRev );
+      nfse_hex_from_blob_direct( pCert->pCertInfo->SerialNumber.pbData, cbSerial, serialDir );
+
+      if( strcmp( serialBusca, serialRev ) == 0 || strcmp( serialBusca, serialDir ) == 0 )
+      {
+         pFound = CertDuplicateCertificateContext( pCert );
+         break;
+      }
+   }
+
+   if( ! pFound )
+   {
+      CertCloseStore( hStore, 0 );
+      hb_retc( "ERRO_ASSINATURA_RPS: certificado nao encontrado pelo serial." );
+      return;
+   }
+
+   if( ! CryptAcquireCertificatePrivateKey( pFound, 0, NULL, &hKey, &dwKeySpec, &mustFreeKey ) )
+   {
+      CertFreeCertificateContext( pFound );
+      CertCloseStore( hStore, 0 );
+      nfse_return_last_error( "ERRO_ASSINATURA_RPS: nao foi possivel obter a chave privada." );
+      return;
+   }
+
+   if( ! CryptCreateHash( ( HCRYPTPROV ) hKey, CALG_SHA1, 0, 0, &hHash ) )
+   {
+      if( mustFreeKey ) CryptReleaseContext( ( HCRYPTPROV ) hKey, 0 );
+      CertFreeCertificateContext( pFound );
+      CertCloseStore( hStore, 0 );
+      nfse_return_last_error( "ERRO_ASSINATURA_RPS: CryptCreateHash falhou." );
+      return;
+   }
+
+   if( ! CryptHashData( hHash, textParam, textLen, 0 ) )
+   {
+      CryptDestroyHash( hHash );
+      if( mustFreeKey ) CryptReleaseContext( ( HCRYPTPROV ) hKey, 0 );
+      CertFreeCertificateContext( pFound );
+      CertCloseStore( hStore, 0 );
+      nfse_return_last_error( "ERRO_ASSINATURA_RPS: CryptHashData falhou." );
+      return;
+   }
+
+   if( ! CryptSignHashA( hHash, dwKeySpec, NULL, 0, NULL, &sigLen ) )
+   {
+      CryptDestroyHash( hHash );
+      if( mustFreeKey ) CryptReleaseContext( ( HCRYPTPROV ) hKey, 0 );
+      CertFreeCertificateContext( pFound );
+      CertCloseStore( hStore, 0 );
+      nfse_return_last_error( "ERRO_ASSINATURA_RPS: CryptSignHash tamanho falhou." );
+      return;
+   }
+
+   sig = ( BYTE * ) hb_xgrab( sigLen );
+   if( ! CryptSignHashA( hHash, dwKeySpec, NULL, 0, sig, &sigLen ) )
+   {
+      hb_xfree( sig );
+      CryptDestroyHash( hHash );
+      if( mustFreeKey ) CryptReleaseContext( ( HCRYPTPROV ) hKey, 0 );
+      CertFreeCertificateContext( pFound );
+      CertCloseStore( hStore, 0 );
+      nfse_return_last_error( "ERRO_ASSINATURA_RPS: CryptSignHash falhou." );
+      return;
+   }
+
+   /* CryptoAPI retorna assinatura RSA little-endian; .NET RSAPKCS1 retorna big-endian. */
+   for( i = 0; i < sigLen / 2; ++i )
+   {
+      BYTE tmp = sig[ i ];
+      sig[ i ] = sig[ sigLen - 1 - i ];
+      sig[ sigLen - 1 - i ] = tmp;
+   }
+
+   if( ! CryptBinaryToStringA( sig, sigLen, CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, NULL, &base64Len ) )
+   {
+      hb_xfree( sig );
+      CryptDestroyHash( hHash );
+      if( mustFreeKey ) CryptReleaseContext( ( HCRYPTPROV ) hKey, 0 );
+      CertFreeCertificateContext( pFound );
+      CertCloseStore( hStore, 0 );
+      nfse_return_last_error( "ERRO_ASSINATURA_RPS: CryptBinaryToString tamanho falhou." );
+      return;
+   }
+
+   base64 = ( char * ) hb_xgrab( base64Len + 1 );
+   if( ! CryptBinaryToStringA( sig, sigLen, CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, base64, &base64Len ) )
+   {
+      hb_xfree( base64 );
+      hb_xfree( sig );
+      CryptDestroyHash( hHash );
+      if( mustFreeKey ) CryptReleaseContext( ( HCRYPTPROV ) hKey, 0 );
+      CertFreeCertificateContext( pFound );
+      CertCloseStore( hStore, 0 );
+      nfse_return_last_error( "ERRO_ASSINATURA_RPS: CryptBinaryToString falhou." );
+      return;
+   }
+
+   hb_retc( base64 );
+
+   hb_xfree( base64 );
+   hb_xfree( sig );
+   CryptDestroyHash( hHash );
+   if( mustFreeKey ) CryptReleaseContext( ( HCRYPTPROV ) hKey, 0 );
+   CertFreeCertificateContext( pFound );
+   CertCloseStore( hStore, 0 );
+}
+
+#pragma ENDDUMP
