@@ -3214,6 +3214,85 @@ METHOD SoapConsulta( cProtocolo ) CLASS TEsocialClient
    cEnvelope += '</soapenv:Body></soapenv:Envelope>'
 RETURN cEnvelope
 
+CLASS TEsocialCertificado
+   // Configurações iniciais básicas
+   VAR cCertificado AS Character INIT [NENHUM]                                 // Nome do certificado (Somente o Nome)
+   VAR cCertNomecer AS Character INIT []                                       // Nome do certificado retornado (Nome completo CN=Nome do certificado, .....)
+   VAR cCertEmissor AS Character INIT []                                       // Nome do Emissor do certificado retornado
+   VAR dCertDataini              INIT Ctod([])                                 // Data Inicial de Validade do certificado retornado
+   VAR dCertDatafim              INIT Ctod([])                                 // Data Final de Validade do certificado retornado
+   VAR cCertImprDig AS Character INIT []                                       // Impressão Digital do certificado retornado
+   VAR cCertSerial  AS Character INIT []                                       // Número Serial do certificado retornado
+   VAR nCertVersao  AS Num       INIT 0                                        // Versão do certificado retornado
+   VAR lCertInstall AS Logical   INIT .F.                                      // Verifica se o Certificado está Instalado no Repositório do Windows
+   VAR lCertVencido AS Logical   INIT .F.                                      // Verifica se o Certificado está Vencido
+
+   // Métodos Operacionais
+   METHOD fCertificadoNative()
+   METHOD fCertificadoPfx()                                                    // cCertificadoArquivo, cCertificadoSenha
+ENDCLASS
+
+METHOD fCertificadoNative()
+   Local cDados:= SelecionarCertificadoNative()
+
+   If Empty(cDados) .or. Left(cDados, 5) == [ERRO_]
+      Return (Nil)
+   Endif
+
+   ::cCertNomecer:= ::cCertificado:= CertNativeToken(cDados, 1)
+   ::cCertEmissor:= CertNativeToken(cDados, 2)
+   ::dCertDataini:= StoD(CertNativeToken(cDados, 3))
+   ::dCertDatafim:= StoD(CertNativeToken(cDados, 4))
+   ::cCertImprDig:= CertNativeToken(cDados, 5)
+   ::cCertSerial := CertNativeToken(cDados, 6)
+   ::nCertVersao := Val(CertNativeToken(cDados, 7))
+   ::lCertInstall:= CertNativeToken(cDados, 8) == [1]
+
+   If Dtos(::dCertDatafim) < Dtos(Date())
+      ::lCertVencido:= .T.
+   Else
+      ::lCertVencido:= .F.
+   Endif
+
+   If [CN=] $ ::cCertificado
+      ::cCertificado:= Substr(::cCertificado, At([CN=], ::cCertificado) + 3)
+      If [,] $ ::cCertificado
+         ::cCertificado:= Substr(::cCertificado, 1, At([,], ::cCertificado) - 1)
+      Endif
+   Endif
+Return (Nil)
+
+* ---------> Metodo para ler dados do PFX sem CAPICOM e sem instalar <-------- *
+METHOD fCertificadoPfx(cCertificadoArquivo, cCertificadoSenha) 
+   Local cDados:= LerCertificadoPfxNative(cCertificadoArquivo, cCertificadoSenha)
+
+   If Empty(cDados) .or. Left(cDados, 5) == [ERRO_]
+      Return (Nil)
+   Endif
+
+   ::cCertNomecer:= ::cCertificado:= CertNativeToken(cDados, 1)
+   ::cCertEmissor:= CertNativeToken(cDados, 2)
+   ::dCertDataini:= StoD(CertNativeToken(cDados, 3))
+   ::dCertDatafim:= StoD(CertNativeToken(cDados, 4))
+   ::cCertImprDig:= CertNativeToken(cDados, 5)
+   ::cCertSerial := CertNativeToken(cDados, 6)
+   ::nCertVersao := Val(CertNativeToken(cDados, 7))
+   ::lCertInstall:= CertNativeToken(cDados, 8) == [1]
+
+   If Dtos(::dCertDatafim) < Dtos(Date())
+      ::lCertVencido:= .T.
+   Else
+      ::lCertVencido:= .F.
+   Endif
+
+   If [CN=] $ ::cCertificado
+      ::cCertificado:= Substr(::cCertificado, At([CN=], ::cCertificado) + 3)
+      If [,] $ ::cCertificado
+         ::cCertificado:= Substr(::cCertificado, 1, At([,], ::cCertificado) - 1)
+      Endif
+   Endif
+Return (Nil)
+
 FUNCTION EsocialExtrairTag( cXml, cTag )
    LOCAL nStart, nClose, cResult := ""
 
@@ -4120,85 +4199,6 @@ FUNCTION SoNumeroCnpj(cTxt)
        EndIf
    Next
 Return (cSoNumeros)
-
-CLASS TEsocialCertificado
-   // Configurações iniciais básicas
-   VAR cCertificado                 AS Character INIT [NENHUM]                                 // Nome do certificado (Somente o Nome)
-   VAR cCertNomecer                 AS Character INIT []                                       // Nome do certificado retornado (Nome completo CN=Nome do certificado, .....)
-   VAR cCertEmissor                 AS Character INIT []                                       // Nome do Emissor do certificado retornado
-   VAR dCertDataini                              INIT Ctod([])                                 // Data Inicial de Validade do certificado retornado
-   VAR dCertDatafim                              INIT Ctod([])                                 // Data Final de Validade do certificado retornado
-   VAR cCertImprDig                 AS Character INIT []                                       // Impressão Digital do certificado retornado
-   VAR cCertSerial                  AS Character INIT []                                       // Número Serial do certificado retornado
-   VAR nCertVersao                  AS Num       INIT 0                                        // Versão do certificado retornado
-   VAR lCertInstall                 AS Logical   INIT .F.                                      // Verifica se o Certificado está Instalado no Repositório do Windows
-   VAR lCertVencido                 AS Logical   INIT .F.                                      // Verifica se o Certificado está Vencido
-
-   // Métodos Operacionais
-   METHOD fCertificadoNative()
-   METHOD fCertificadoPfx()                                                                    // cCertificadoArquivo, cCertificadoSenha
-ENDCLASS
-
-METHOD fCertificadoNative()
-   Local cDados:= SelecionarCertificadoNative()
-
-   If Empty(cDados) .or. Left(cDados, 5) == [ERRO_]
-      Return (Nil)
-   Endif
-
-   ::cCertNomecer:= ::cCertificado:= CertNativeToken(cDados, 1)
-   ::cCertEmissor:= CertNativeToken(cDados, 2)
-   ::dCertDataini:= StoD(CertNativeToken(cDados, 3))
-   ::dCertDatafim:= StoD(CertNativeToken(cDados, 4))
-   ::cCertImprDig:= CertNativeToken(cDados, 5)
-   ::cCertSerial := CertNativeToken(cDados, 6)
-   ::nCertVersao := Val(CertNativeToken(cDados, 7))
-   ::lCertInstall:= CertNativeToken(cDados, 8) == [1]
-
-   If Dtos(::dCertDatafim) < Dtos(Date())
-      ::lCertVencido:= .T.
-   Else
-      ::lCertVencido:= .F.
-   Endif
-
-   If [CN=] $ ::cCertificado
-      ::cCertificado:= Substr(::cCertificado, At([CN=], ::cCertificado) + 3)
-      If [,] $ ::cCertificado
-         ::cCertificado:= Substr(::cCertificado, 1, At([,], ::cCertificado) - 1)
-      Endif
-   Endif
-Return (Nil)
-
-* ---------> Metodo para ler dados do PFX sem CAPICOM e sem instalar <-------- *
-METHOD fCertificadoPfx(cCertificadoArquivo, cCertificadoSenha) 
-   Local cDados:= LerCertificadoPfxNative(cCertificadoArquivo, cCertificadoSenha)
-
-   If Empty(cDados) .or. Left(cDados, 5) == [ERRO_]
-      Return (Nil)
-   Endif
-
-   ::cCertNomecer:= ::cCertificado:= CertNativeToken(cDados, 1)
-   ::cCertEmissor:= CertNativeToken(cDados, 2)
-   ::dCertDataini:= StoD(CertNativeToken(cDados, 3))
-   ::dCertDatafim:= StoD(CertNativeToken(cDados, 4))
-   ::cCertImprDig:= CertNativeToken(cDados, 5)
-   ::cCertSerial := CertNativeToken(cDados, 6)
-   ::nCertVersao := Val(CertNativeToken(cDados, 7))
-   ::lCertInstall:= CertNativeToken(cDados, 8) == [1]
-
-   If Dtos(::dCertDatafim) < Dtos(Date())
-      ::lCertVencido:= .T.
-   Else
-      ::lCertVencido:= .F.
-   Endif
-
-   If [CN=] $ ::cCertificado
-      ::cCertificado:= Substr(::cCertificado, At([CN=], ::cCertificado) + 3)
-      If [,] $ ::cCertificado
-         ::cCertificado:= Substr(::cCertificado, 1, At([,], ::cCertificado) - 1)
-      Endif
-   Endif
-Return (Nil)
 
 Static Function CertNativeToken(cDados, nToken)
    Local nPos:= 1, nStart:= 1, nAtual:= 1
