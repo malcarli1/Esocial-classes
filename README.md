@@ -5,6 +5,8 @@ Uma biblioteca nativa e de alta performance desenvolvida em Harbour para geraç�
 
 O grande diferencial deste projeto é a ponte criptográfica (esocial_crypto.prg), que realiza a assinatura digital SHA256 utilizando diretamente as APIs nativas do ecossistema Windows (CryptoAPI). Isso elimina completamente a dependência de executáveis externos (como OpenSSL via linha de comando ou utilitários de terceiros), garantindo maior velocidade, segurança e facilidade de distribuição do seu sistema.
 
+* **Gestão de Certificados Modernizada**: Seleção, leitura e extração de chaves públicas/privadas de certificados digitais instalados no repositório do Windows (MY) de forma 100% nativa. Dispensa totalmente o uso do antigo e problemático CAPICOM.dll.
+* 
 ✨ Principais Características
 Ponte Criptográfica Nativa (esocial_crypto.prg): Assinatura digital padrão XML-DSIG usando a CryptoAPI do Windows (crypt32.dll / advapi32.dll) através de código C acoplado via #pragma BEGINDUMP.
 
