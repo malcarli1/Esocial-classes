@@ -1,0 +1,10 @@
+-lhbwin
+-LC:\xbase\bcc582\Lib\PSDK
+-lcrypt32
+-lcryptui
+-ladvapi32
+-odemo_retorno_lote
+
+demo_retorno_lote.prg
+esocial_classes(1).prg
+esocial_crypto.prg

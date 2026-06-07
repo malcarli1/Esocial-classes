@@ -1,0 +1,49 @@
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+  <s:Body>
+    <ConsultarLoteEventosResponse>
+      <ConsultarLoteEventosResult>
+        <eSocial>
+          <retornoProcessamentoLoteEventos>
+            <status>
+              <cdResposta>201</cdResposta>
+              <descResposta>Lote processado com sucesso.</descResposta>
+            </status>
+            <dadosRecepcaoLote>
+              <protocoloEnvio>1.2.202606.000000000000001</protocoloEnvio>
+            </dadosRecepcaoLote>
+            <retornoEventos>
+              <retornoEvento Id="ID101234560000002026060518000000001">
+                <eSocial>
+                  <retornoEvento>
+                    <processamento>
+                      <cdResposta>201</cdResposta>
+                      <descResposta>Sucesso.</descResposta>
+                    </processamento>
+                  </retornoEvento>
+                </eSocial>
+              </retornoEvento>
+              <retornoEvento Id="ID101234560000002026060518000000002">
+                <eSocial>
+                  <retornoEvento>
+                    <processamento>
+                      <cdResposta>401</cdResposta>
+                      <descResposta>Conteudo do evento invalido.</descResposta>
+                      <ocorrencias>
+                        <ocorrencia>
+                          <tipo>1</tipo>
+                          <codigo>123</codigo>
+                          <descricao>Campo obrigatorio nao informado.</descricao>
+                          <localizacao>/eSocial/evtTeste/campo</localizacao>
+                        </ocorrencia>
+                      </ocorrencias>
+                    </processamento>
+                  </retornoEvento>
+                </eSocial>
+              </retornoEvento>
+            </retornoEventos>
+          </retornoProcessamentoLoteEventos>
+        </eSocial>
+      </ConsultarLoteEventosResult>
+    </ConsultarLoteEventosResponse>
+  </s:Body>
+</s:Envelope>
