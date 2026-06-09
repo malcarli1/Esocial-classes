@@ -3079,6 +3079,7 @@ CLASS TEsocialRetornoLote
    VAR cDescResposta INIT ""
    VAR cProtocolo    INIT ""
    VAR aEventos      INIT {}
+   VAR aOcorrencias  INIT {}
    VAR cXml          INIT ""
 
    METHOD New() // cXml
@@ -3086,6 +3087,8 @@ CLASS TEsocialRetornoLote
    METHOD TodosEventosOk()
    METHOD GetEventoCount()
    METHOD GetEvento() // nIndex zero-based igual Unimake
+   METHOD GetOcorrenciaCount()
+   METHOD GetOcorrencia() // ocorrencias do status do lote, zero-based
    METHOD ToTexto()
 ENDCLASS
 
@@ -3387,7 +3390,7 @@ METHOD GetOcorrencia( nIndex ) CLASS TEsocialRetornoEvento
 RETURN ::aOcorrencias[ nPos ]
 
 METHOD New( cXml ) CLASS TEsocialRetornoLote
-   LOCAL cLote, cStatus, cEvento, nPos := 1
+   LOCAL cLote, cStatus, cEvento, cOcorr, nPos := 1
 
    ::cXml := hb_DefaultValue( cXml, "" )
    cLote := EsocialXmlPrimeiroBloco( ::cXml, "retornoProcessamentoLoteEventos" )
@@ -3404,7 +3407,17 @@ METHOD New( cXml ) CLASS TEsocialRetornoLote
    ::cDescResposta := EsocialExtrairTag( cStatus, "descResposta" )
    ::cProtocolo := EsocialExtrairTag( cLote, "protocoloEnvio" )
    ::aEventos := {}
+   ::aOcorrencias := {}
 
+   DO WHILE .T.
+      cOcorr := EsocialXmlBloco( cStatus, "ocorrencia", nPos, @nPos )
+      IF Empty( cOcorr )
+         EXIT
+      ENDIF
+      AAdd( ::aOcorrencias, TEsocialRetornoOcorrencia():New( cOcorr ) )
+   ENDDO
+
+   nPos := 1
    DO WHILE .T.
       cEvento := EsocialXmlBloco( cLote, "retornoEvento", nPos, @nPos )
       IF Empty( cEvento )
@@ -3439,12 +3452,27 @@ METHOD GetEvento( nIndex ) CLASS TEsocialRetornoLote
    ENDIF
 RETURN ::aEventos[ nPos ]
 
+METHOD GetOcorrenciaCount() CLASS TEsocialRetornoLote
+RETURN Len( ::aOcorrencias )
+
+METHOD GetOcorrencia( nIndex ) CLASS TEsocialRetornoLote
+   LOCAL nPos := hb_DefaultValue( nIndex, 0 ) + 1
+   IF nPos < 1 .OR. nPos > Len( ::aOcorrencias )
+      RETURN Nil
+   ENDIF
+RETURN ::aOcorrencias[ nPos ]
+
 METHOD ToTexto() CLASS TEsocialRetornoLote
    LOCAL cTexto, nI, nX, oEvento, oOcorr
 
    cTexto := "Lote: " + AllTrim( Str( ::nCdResposta ) ) + " - " + ::cDescResposta + hb_Eol()
    cTexto += "Protocolo: " + ::cProtocolo + hb_Eol()
    cTexto += "Eventos: " + AllTrim( Str( Len( ::aEventos ) ) ) + hb_Eol()
+
+   FOR nX := 1 TO ::GetOcorrenciaCount()
+      oOcorr := ::GetOcorrencia( nX - 1 )
+      cTexto += "Ocorrencia do lote " + AllTrim( Str( nX ) ) + ": tipo=" + AllTrim( Str( oOcorr:nTipo ) ) + ", codigo=" + oOcorr:cCodigo + ", descricao=" + oOcorr:cDescricao + ", localizacao=" + oOcorr:cLocalizacao + hb_Eol()
+   NEXT
 
    FOR nI := 1 TO Len( ::aEventos )
       oEvento := ::aEventos[ nI ]
