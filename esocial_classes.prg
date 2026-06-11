@@ -1,11 +1,11 @@
-/*****************************************************************************
+cind/*****************************************************************************
  * SISTEMA  : SISTEMA DE GESTÃO OCUPACIONAL                                  *
  * PROGRAMA : ESOCIAL_CLASSES.PRG                                            *
  * OBJETIVO : Gerar, Assinar e Enviar Arquivos do eSocial                    *
  * AUTOR    : Franklin Brasil                                                *
  * ALTERADO : Marcelo Antonio Lazzaro Carli                                  *
  * DATA     : 29.05.2026                                                     *
- * ULT. ALT.: 05.06.2026                                                     *
+ * ULT. ALT.: 11.06.2026                                                     *
  *****************************************************************************/
 #include "hbclass.ch"
 
@@ -71,7 +71,7 @@ METHOD EnableXsdValidation( lAtivar ) CLASS TEsocialConfig
 RETURN Self
 
 CLASS TEsocialEventoS2220
-***   VAR cVersaoSchema   AS Character INIT [v_S_01_03_00]
+   VAR cVersaoSchema   AS Character INIT [v_S_01_03_00]
    VAR cId             AS Character INIT ""
    VAR cTpAmb          AS Character INIT "2"
    VAR cProcEmi        AS Character INIT "1"
@@ -183,13 +183,13 @@ RETURN Self
 
 METHOD SetMedico( cNmMed, cNrCRM, cUfCRM ) CLASS TEsocialEventoS2220
    ::cNmMed := AllTrim( cNmMed )
-   ::cNrCRM := AllTrim( cNrCRM )
+   ::cNrCRM := AllTrim( OnlyDigits( cNrCRM ))
    ::cUfCRM := Upper( AllTrim( cUfCRM ) )
 RETURN Self
 
 METHOD SetRespMonit( cNmResp, cNrCRM, cUfCRM, cCpfResp ) CLASS TEsocialEventoS2220
    ::cNmRespMonit := AllTrim( cNmResp )
-   ::cNrCRMRespMonit := AllTrim( cNrCRM )
+   ::cNrCRMRespMonit := AllTrim( OnlyDigits( cNrCRM ))
    ::cUfCRMRespMonit := Upper( AllTrim( cUfCRM ) )
    IF cCpfResp != Nil
       ::cCpfRespMonit := OnlyDigits( cCpfResp )
@@ -202,7 +202,7 @@ METHOD ToXml() CLASS TEsocialEventoS2220
    cXml := '<eSocial xmlns="http://www.esocial.gov.br/schema/evt/evtMonit/' + ::cVersaoSchema + '">'
    cXml += '<evtMonit Id="' + EsocialXmlEscape( ::cId ) + '">'
    cXml += '<ideEvento><indRetif>' + ::cIndRetif + '</indRetif>'
-   IF ! Empty( ::cNrRecibo )
+   IF ! Empty( ::cNrRecibo ) .and. ::cIndRetif == "2"
       cXml += '<nrRecibo>' + EsocialXmlEscape( ::cNrRecibo ) + '</nrRecibo>'
    ENDIF
    cXml += '<tpAmb>' + ::cTpAmb + '</tpAmb><procEmi>' + ::cProcEmi + '</procEmi><verProc>' + EsocialXmlEscape( ::cVerProc ) + '</verProc></ideEvento>'
@@ -259,8 +259,8 @@ METHOD ToXml() CLASS TEsocialEventoS2220
 RETURN cXml
 
 CLASS TEsocialEventoS3000 FROM TEsocialEventoS2220
-   VAR cTpEvento AS Character INIT "S-2220"
-   VAR cNrRecEvt AS Character INIT "1.1.0000000099999999999"
+   VAR cTpEvento   AS Character INIT "S-2220"
+   VAR cNrRecEvt   AS Character INIT "1.1.0000000099999999999"
 
    METHOD New()
    METHOD SetEventoExcluido()  //  cTpEvento, cNrRecEvt 
@@ -317,7 +317,7 @@ METHOD ToXml() CLASS TEsocialEventoS2221
    cXml := '<eSocial xmlns="http://www.esocial.gov.br/schema/evt/evtToxic/' + ::cVersaoSchema + '">'
    cXml += '<evtToxic Id="' + EsocialXmlEscape( ::cId ) + '">'
    cXml += '<ideEvento><indRetif>' + ::cIndRetif + '</indRetif>'
-   IF ! Empty( ::cNrRecibo )
+   IF ! Empty( ::cNrRecibo ) .and. ::cIndRetif == "2"
       cXml += '<nrRecibo>' + EsocialXmlEscape( ::cNrRecibo ) + '</nrRecibo>'
    ENDIF
    cXml += '<tpAmb>' + ::cTpAmb + '</tpAmb><procEmi>' + ::cProcEmi + '</procEmi><verProc>' + EsocialXmlEscape( ::cVerProc ) + '</verProc></ideEvento>'
@@ -534,7 +534,7 @@ METHOD ToXml() CLASS TEsocialEventoS2210
    cXml := '<eSocial xmlns="http://www.esocial.gov.br/schema/evt/evtCAT/' + ::cVersaoSchema + '">'
    cXml += '<evtCAT Id="' + EsocialXmlEscape( ::cId ) + '">'
    cXml += '<ideEvento><indRetif>' + ::cIndRetif + '</indRetif>'
-   IF ! Empty( ::cNrRecibo )
+   IF ! Empty( ::cNrRecibo ) .and. ::cIndRetif == "2"
       cXml += '<nrRecibo>' + EsocialXmlEscape( ::cNrRecibo ) + '</nrRecibo>'
    ENDIF
    cXml += '<tpAmb>' + ::cTpAmb + '</tpAmb><procEmi>' + ::cProcEmi + '</procEmi><verProc>' + EsocialXmlEscape( ::cVerProc ) + '</verProc></ideEvento>'
@@ -718,7 +718,7 @@ METHOD ToXml() CLASS TEsocialEventoS2240
    cXml := '<eSocial xmlns="http://www.esocial.gov.br/schema/evt/evtExpRisco/' + ::cVersaoSchema + '">'
    cXml += '<evtExpRisco Id="' + EsocialXmlEscape( ::cId ) + '">'
    cXml += '<ideEvento><indRetif>' + ::cIndRetif + '</indRetif>'
-   IF ! Empty( ::cNrRecibo )
+   IF ! Empty( ::cNrRecibo ) .and. ::cIndRetif == "2"
       cXml += '<nrRecibo>' + EsocialXmlEscape( ::cNrRecibo ) + '</nrRecibo>'
    ENDIF
    cXml += '<tpAmb>' + ::cTpAmb + '</tpAmb><procEmi>' + ::cProcEmi + '</procEmi><verProc>' + EsocialXmlEscape( ::cVerProc ) + '</verProc></ideEvento>'
@@ -3232,11 +3232,11 @@ METHOD ConsultarLote( cProtocolo ) CLASS TEsocialClient
    EsocialMemoWritUtf8( "Retorno_eSocial.xml", cRetorno )
 RETURN cRetorno
 
-
 METHOD ConsultarLoteDetalhado( cProtocolo ) CLASS TEsocialClient
    LOCAL cRetorno
    cRetorno := ::ConsultarLote( cProtocolo )
 RETURN TEsocialRetornoLote():New( cRetorno )
+
 METHOD SoapEnvio( cXmlAssinado ) CLASS TEsocialClient
    LOCAL cEnvelope
    cEnvelope := '<?xml version="1.0" encoding="UTF-8"?>'
