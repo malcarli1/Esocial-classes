@@ -1,11 +1,11 @@
-cind/*****************************************************************************
+/*****************************************************************************
  * SISTEMA  : SISTEMA DE GESTÃO OCUPACIONAL                                  *
  * PROGRAMA : ESOCIAL_CLASSES.PRG                                            *
  * OBJETIVO : Gerar, Assinar e Enviar Arquivos do eSocial                    *
  * AUTOR    : Franklin Brasil                                                *
  * ALTERADO : Marcelo Antonio Lazzaro Carli                                  *
  * DATA     : 29.05.2026                                                     *
- * ULT. ALT.: 11.06.2026                                                     *
+ * ULT. ALT.: 15.06.2026                                                     *
  *****************************************************************************/
 #include "hbclass.ch"
 
@@ -806,14 +806,14 @@ METHOD ToXml() CLASS TEsocialEventoS2240
 RETURN cXml
 
 CLASS TEsocialEventoXml
-   VAR cVersaoSchema AS Character  INIT [v_S_01_03_00]
-   VAR cId           AS Character  INIT ""
-   VAR cSchemaEvento AS Character  INIT ""
-   VAR cNomeEvento   AS Character  INIT ""
-   VAR cConteudo     AS Character  INIT ""
+   VAR cVersaoSchema  AS Character INIT [v_S_01_03_00]
+   VAR cId            AS Character INIT ""
+   VAR cSchemaEvento  AS Character INIT ""
+   VAR cNomeEvento    AS Character INIT ""
+   VAR cConteudo      AS Character INIT ""
    VAR cTipoIdeEvento AS Character INIT ""
    VAR aCampos                     INIT {}
-   VAR cCodigoEvento AS Character  INIT ""
+   VAR cCodigoEvento  AS Character INIT ""
    VAR cTemplatePath  AS Character INIT "templates_eventos"
 
    METHOD New()
@@ -3042,31 +3042,32 @@ RETURN cOut
 
 CLASS TEsocialClient
    VAR oConfig AS OBJECT
+   VAR cPaths  AS Character INIT ""
 
-   METHOD New()                // oConfig
-   METHOD EnviarLoteAssinado() // cArquivoXml
-   METHOD ConsultarLote()      // cProtocolo
+   METHOD New()                    // oConfig
+   METHOD EnviarLoteAssinado()     // cArquivoXml
+   METHOD ConsultarLote()          // cProtocolo
    METHOD ConsultarLoteDetalhado() // cProtocolo
-   METHOD SoapEnvio()          // cXmlAssinado
-   METHOD SoapConsulta()       // cProtocolo
+   METHOD SoapEnvio()              // cXmlAssinado
+   METHOD SoapConsulta()           // cProtocolo
 ENDCLASS
 
 CLASS TEsocialRetornoOcorrencia
-   VAR cXml         INIT ""
-   VAR nTipo        INIT 0
-   VAR cCodigo      INIT ""
-   VAR cDescricao   INIT ""
-   VAR cLocalizacao INIT ""
+   VAR cXml         AS Character INIT ""
+   VAR nTipo        AS Int INIT 0
+   VAR cCodigo      AS Character INIT ""
+   VAR cDescricao   AS Character INIT ""
+   VAR cLocalizacao AS Character INIT ""
 
    METHOD New() // cXml
 ENDCLASS
 
 CLASS TEsocialRetornoEvento
-   VAR cId           INIT ""
-   VAR nCdResposta   INIT 0
-   VAR cDescResposta INIT ""
-   VAR aOcorrencias  INIT {}
-   VAR cXml          INIT ""
+   VAR cId           AS Character INIT ""
+   VAR nCdResposta   AS Int       INIT 0
+   VAR cDescResposta AS Character INIT ""
+   VAR aOcorrencias               INIT {}
+   VAR cXml          AS Character INIT ""
 
    METHOD New() // cXml
    METHOD Ok()
@@ -3075,12 +3076,12 @@ CLASS TEsocialRetornoEvento
 ENDCLASS
 
 CLASS TEsocialRetornoLote
-   VAR nCdResposta   INIT 0
-   VAR cDescResposta INIT ""
-   VAR cProtocolo    INIT ""
-   VAR aEventos      INIT {}
-   VAR aOcorrencias  INIT {}
-   VAR cXml          INIT ""
+   VAR nCdResposta   AS Int       INIT 0
+   VAR cDescResposta AS Character INIT ""
+   VAR cProtocolo    AS Character INIT ""
+   VAR aEventos                   INIT {}
+   VAR aOcorrencias               INIT {}
+   VAR cXml          AS Character INIT ""
 
    METHOD New() // cXml
    METHOD LoteOk()
@@ -3178,11 +3179,11 @@ METHOD EnviarLoteAssinado( cArquivoXml ) CLASS TEsocialClient
    cXmlAssinado := StrTran( cXmlAssinado, '<?xml version="1.0" encoding="utf-8"?>', "" )
    cXmlAssinado := AllTrim( cXmlAssinado )
    IF ::oConfig:lValidarXsd .AND. ! EsocialValidarEventosDoLoteXsd( cXmlAssinado, ::oConfig:cXsdPath )
-      hb_MemoWrit( "Erro_Resposta.xml", EsocialValidacaoLastError() + hb_Eol() )
+      hb_MemoWrit( ::cPaths + "Erro_Resposta.xml", EsocialValidacaoLastError() + hb_Eol() )
       RETURN ""
    ENDIF
    cEnvelope := ::SoapEnvio( cXmlAssinado )
-   hb_MemoWrit( "Debug_Envelope_Final.xml", cEnvelope )
+   hb_MemoWrit( ::cPaths + "Debug_Envelope_Final.xml", cEnvelope )
 
    BEGIN SEQUENCE WITH {|oErr| Break(oErr)}
       oHttp := Win_OleCreateObject( "MSXML2.ServerXMLHTTP.6.0" )
@@ -3201,7 +3202,7 @@ METHOD EnviarLoteAssinado( cArquivoXml ) CLASS TEsocialClient
       cRetorno := ""
    END SEQUENCE
 
-   EsocialMemoWritUtf8( "Erro_Resposta.xml", cRetorno )
+   EsocialMemoWritUtf8( ::cPaths + "Erro_Resposta.xml", cRetorno )
 RETURN cRetorno
 
 METHOD ConsultarLote( cProtocolo ) CLASS TEsocialClient
@@ -3229,7 +3230,7 @@ METHOD ConsultarLote( cProtocolo ) CLASS TEsocialClient
    RECOVER
       cRetorno := ""
    END SEQUENCE
-   EsocialMemoWritUtf8( "Retorno_eSocial.xml", cRetorno )
+   EsocialMemoWritUtf8( ::cPaths + "Retorno_eSocial.xml", cRetorno )
 RETURN cRetorno
 
 METHOD ConsultarLoteDetalhado( cProtocolo ) CLASS TEsocialClient
