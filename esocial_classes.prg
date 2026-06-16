@@ -5,7 +5,7 @@
  * AUTOR    : Franklin Brasil                                                *
  * ALTERADO : Marcelo Antonio Lazzaro Carli                                  *
  * DATA     : 29.05.2026                                                     *
- * ULT. ALT.: 15.06.2026                                                     *
+ * ULT. ALT.: 16.06.2026                                                     *
  *****************************************************************************/
 #include "hbclass.ch"
 
@@ -412,12 +412,14 @@ METHOD SetAcidente( cDtAcid, cTpAcid, cHrAcid, cHrsTrabAntesAcid, cTpCat, cIndCa
    IF cTpAcid != Nil
       ::cTpAcid := AllTrim( cTpAcid )
    ENDIF
-   IF cHrAcid != Nil
-      ::cHrAcid := OnlyDigits( cHrAcid )
-   ENDIF
-   IF cHrsTrabAntesAcid != Nil
-      ::cHrsTrabAntesAcid := OnlyDigits( cHrsTrabAntesAcid )
-   ENDIF
+   If ::cTpAcid == [1] .or. ::cTpAcid == [3]                 
+      IF cHrAcid != Nil
+         ::cHrAcid := OnlyDigits( cHrAcid )
+      ENDIF
+      IF cHrsTrabAntesAcid != Nil
+         ::cHrsTrabAntesAcid := OnlyDigits( cHrsTrabAntesAcid )
+      ENDIF
+   Endif
    IF cTpCat != Nil
       ::cTpCat := AllTrim( cTpCat )
    ENDIF
@@ -433,7 +435,7 @@ METHOD SetAcidente( cDtAcid, cTpAcid, cHrAcid, cHrsTrabAntesAcid, cTpCat, cIndCa
    IF cIniciatCAT != Nil
       ::cIniciatCAT := AllTrim( cIniciatCAT )
    ENDIF
-   IF cObsCAT != Nil
+   IF !Empty(cObsCAT)
       ::cObsCAT := AllTrim( cObsCAT )
    ENDIF
    IF cUltDiaTrab != Nil
@@ -442,7 +444,7 @@ METHOD SetAcidente( cDtAcid, cTpAcid, cHrAcid, cHrsTrabAntesAcid, cTpCat, cIndCa
    IF cHouveAfast != Nil
       ::cHouveAfast := Upper( AllTrim( cHouveAfast ) )
    ENDIF
-   IF cDtObito != Nil
+   IF cDtObito != Nil .and. cIndCatObito == [S]
       ::cDtObito := DateXml( cDtObito )
    ENDIF
 RETURN Self
@@ -469,20 +471,20 @@ METHOD SetLocalAcidente( cTpLocal, cDscLocal, cTpLograd, cDscLograd, cNrLograd, 
    IF cBairro != Nil
       ::cBairro := AllTrim( cBairro )
    ENDIF
-   IF cCep != Nil
+   IF cCep != Nil .and. (cTpLocal == [1] .or. cTpLocal == [3] .or. cTpLocal == [5])
       ::cCep := OnlyDigits( cCep )
    ENDIF
-   IF cCodMunic != Nil
+   IF cCodMunic != Nil .and. cTpLocal # [2]
       ::cCodMunic := OnlyDigits( cCodMunic )
+      IF cUf != Nil
+         ::cUf := Upper( AllTrim( cUf ) )
+      ENDIF
    ENDIF
-   IF cUf != Nil
-      ::cUf := Upper( AllTrim( cUf ) )
-   ENDIF
-   IF cPais != Nil
+   IF cPais != Nil .and. cTpLocal == [2]
       ::cPais := OnlyDigits( cPais )
-   ENDIF
-   IF cCodPostal != Nil
-      ::cCodPostal := AllTrim( cCodPostal )
+      IF cCodPostal != Nil
+         ::cCodPostal := AllTrim( cCodPostal )
+      ENDIF
    ENDIF
    IF cTpInscLocal != Nil
       ::cTpInscLocal := AllTrim( cTpInscLocal )
