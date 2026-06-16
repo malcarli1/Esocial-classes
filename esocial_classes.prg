@@ -128,11 +128,11 @@ METHOD SetId( cId ) CLASS TEsocialEventoS2220
 RETURN Self
 
 METHOD SetAmbiente( cTpAmb ) CLASS TEsocialEventoS2220
-   ::cTpAmb := AllTrim( cTpAmb )
+   ::cTpAmb := Iif( !( cTpAmb $ [1_2_7_8_9]), [2], Left( cTpAmb, 1 ) )
 RETURN Self
 
 METHOD SetEmpregador( cTpInsc, cNrInsc ) CLASS TEsocialEventoS2220
-   ::cTpInsc := AllTrim( cTpInsc )
+   ::cTpInsc := Iif( !( cTpInsc $ [1_2] ), [2], Left( cTpInsc, 1 ) )
    ::cNrInscId := SoNumeroCnpj( cNrInsc )
    ::cNrInsc := ::cNrInscId
    IF ::cTpInsc == "1" .AND. Len( ::cNrInsc ) > 8
@@ -144,10 +144,10 @@ RETURN Self
 METHOD SetTrabalhador( cCpfTrab, cMatricula, cCodCateg ) CLASS TEsocialEventoS2220
    ::cCpfTrab := OnlyDigits( cCpfTrab )
    IF cMatricula != Nil
-      ::cMatricula := AllTrim( cMatricula )
+      ::cMatricula := Left( cMatricula, 30 )
    ENDIF
    IF cCodCateg != Nil
-      ::cCodCateg := OnlyDigits( cCodCateg )
+      ::cCodCateg := OnlyDigits( Left( cCodCateg, 3 ) )
    ENDIF
 RETURN Self
 
@@ -155,10 +155,10 @@ METHOD SetAso( cDtAso, cTpExameOcup, cResAso ) CLASS TEsocialEventoS2220
    ::cDtAso := DateXml( cDtAso )
 
    IF cTpExameOcup != Nil
-      ::cTpExameOcup := AllTrim( cTpExameOcup )
+      ::cTpExameOcup := Iif( !( cTpExameOcup $ [0_1_2_3_4_9] ), [0], Left( cTpExameOcup, 1 ) )
    ENDIF
    IF cResAso != Nil
-      ::cResAso := AllTrim( cResAso )
+      ::cResAso := Iif(!(cResAso $ [1_2]), [1], Left(cResAso, 1))
    ENDIF
 RETURN Self
 
@@ -168,31 +168,31 @@ RETURN ::AddExame( cDtExm, cProcRealizado, cIndResult, cObsProc, cOrdExame )
 
 METHOD AddExame( cDtExm, cProcRealizado, cIndResult, cObsProc, cOrdExame ) CLASS TEsocialEventoS2220
    ::cDtExm := DateXml( cDtExm )
-   ::cProcRealizado := OnlyDigits( cProcRealizado )
+   ::cProcRealizado := OnlyDigits( Left( cProcRealizado, 4 ) )
    IF cIndResult != Nil
-      ::cIndResult := AllTrim( cIndResult )
+      ::cIndResult := Iif( !( cIndResult $ [1_2_3_4] ), [1], Left( cIndResult, 1 ) )
    ENDIF
-   IF cObsProc != Nil
-      ::cObsProc := AllTrim( cObsProc )
+   IF cObsProc != Nil .or. cObsProc == [0583] .or. cObsProc == [0998] .or. cObsProc == [0999] .or. cObsProc == [1128] .or. cObsProc == [1230] .or. cObsProc == [1992] .or. cObsProc == [1993] .or. cObsProc == [1994] .or. cObsProc == [1995] .or. cObsProc == [1996] .or. cObsProc == [1997] .or. cObsProc == [1998] .or. cObsProc == [1999] .or. cObsProc == [9999]
+      ::cObsProc := AllTrim( Left( cObsProc, 999 ) )
    ENDIF
-   IF cOrdExame != Nil
-      ::cOrdExame := AllTrim( cOrdExame )
+   IF cOrdExame != Nil .and. cProcRealizado = [0281]
+      ::cOrdExame := Iif( !( cOrdExame $ [1_2] ), [1], Left( cOrdExame, 1 ) )
    ENDIF
    AAdd( ::aExames, { ::cDtExm, ::cProcRealizado, ::cIndResult, ::cObsProc, ::cOrdExame } )
 RETURN Self
 
 METHOD SetMedico( cNmMed, cNrCRM, cUfCRM ) CLASS TEsocialEventoS2220
-   ::cNmMed := AllTrim( cNmMed )
-   ::cNrCRM := AllTrim( OnlyDigits( cNrCRM ))
-   ::cUfCRM := Upper( AllTrim( cUfCRM ) )
+   ::cNmMed := Left( cNmMed, 70 )
+   ::cNrCRM := Left( OnlyDigits( cNrCRM ) , 10)
+   ::cUfCRM := Upper( Left( cUfCRM, 2 ) )
 RETURN Self
 
 METHOD SetRespMonit( cNmResp, cNrCRM, cUfCRM, cCpfResp ) CLASS TEsocialEventoS2220
-   ::cNmRespMonit := AllTrim( cNmResp )
-   ::cNrCRMRespMonit := AllTrim( OnlyDigits( cNrCRM ))
-   ::cUfCRMRespMonit := Upper( AllTrim( cUfCRM ) )
+   ::cNmRespMonit := Left( cNmResp, 70 )
+   ::cNrCRMRespMonit := Left( OnlyDigits( cNrCRM ), 10 )
+   ::cUfCRMRespMonit := Upper( Left( cUfCRM, 2 ) )
    IF cCpfResp != Nil
-      ::cCpfRespMonit := OnlyDigits( cCpfResp )
+      ::cCpfRespMonit := OnlyDigits( Left( cCpfResp, 11 ) )
    ENDIF
 RETURN Self
 
@@ -201,11 +201,11 @@ METHOD ToXml() CLASS TEsocialEventoS2220
 
    cXml := '<eSocial xmlns="http://www.esocial.gov.br/schema/evt/evtMonit/' + ::cVersaoSchema + '">'
    cXml += '<evtMonit Id="' + EsocialXmlEscape( ::cId ) + '">'
-   cXml += '<ideEvento><indRetif>' + ::cIndRetif + '</indRetif>'
+   cXml += '<ideEvento><indRetif>' + Iif( !( ::cIndRetif $ [1_2] ), [1], Left( ::cIndRetif, 1 ) ) + '</indRetif>'
    IF ! Empty( ::cNrRecibo ) .and. ::cIndRetif == "2"
-      cXml += '<nrRecibo>' + EsocialXmlEscape( ::cNrRecibo ) + '</nrRecibo>'
+      cXml += '<nrRecibo>' + EsocialXmlEscape( Left( ::cNrRecibo, 23 ) ) + '</nrRecibo>'
    ENDIF
-   cXml += '<tpAmb>' + ::cTpAmb + '</tpAmb><procEmi>' + ::cProcEmi + '</procEmi><verProc>' + EsocialXmlEscape( ::cVerProc ) + '</verProc></ideEvento>'
+   cXml += '<tpAmb>' + Iif( !( ::cTpAmb $ [1_2_7_8_9]), [2], Left( ::cTpAmb, 1 ) ) + '</tpAmb><procEmi>' + Iif( !( ::cProcemi $ [0_1_2_3_4_8_9_22] ), [1], Left( ::cProcemi, 2 ) ) + '</procEmi><verProc>' + EsocialXmlEscape( Left (::cVerProc, 20 ) ) + '</verProc></ideEvento>'
    cXml += '<ideEmpregador><tpInsc>' + ::cTpInsc + '</tpInsc><nrInsc>' + ::cNrInsc + '</nrInsc></ideEmpregador>'
    cXml += '<ideVinculo><cpfTrab>' + ::cCpfTrab + '</cpfTrab>'
    IF ! Empty( ::cMatricula )
@@ -272,8 +272,8 @@ METHOD New() CLASS TEsocialEventoS3000
 RETURN Self
 
 METHOD SetEventoExcluido( cTpEvento, cNrRecEvt ) CLASS TEsocialEventoS3000
-   ::cTpEvento := AllTrim( cTpEvento )
-   ::cNrRecEvt := AllTrim( cNrRecEvt )
+   ::cTpEvento := Left( cTpEvento, 6 )
+   ::cNrRecEvt := Left( cNrRecEvt, 23 )
 RETURN Self
 
 METHOD ToXml() CLASS TEsocialEventoS3000
@@ -281,7 +281,7 @@ METHOD ToXml() CLASS TEsocialEventoS3000
 
    cXml := '<eSocial xmlns="http://www.esocial.gov.br/schema/evt/evtExclusao/' + ::cVersaoSchema + '">'
    cXml += '<evtExclusao Id="' + EsocialXmlEscape( ::cId ) + '">'
-   cXml += '<ideEvento><tpAmb>' + ::cTpAmb + '</tpAmb><procEmi>' + ::cProcEmi + '</procEmi><verProc>' + EsocialXmlEscape( ::cVerProc ) + '</verProc></ideEvento>'
+   cXml += '<ideEvento><tpAmb>' + Iif( !( ::cTpAmb $ [1_2_7_8_9]), [2], Left( ::cTpAmb, 1 ) ) + '</tpAmb><procEmi>' + Iif( !( ::cProcemi $ [0_1_2_3_4_8_9_22] ), [1], Left( ::cProcemi, 2 ) ) + '</procEmi><verProc>' + EsocialXmlEscape( Left (::cVerProc, 20 ) ) + '</verProc></ideEvento>'
    cXml += '<ideEmpregador><tpInsc>' + ::cTpInsc + '</tpInsc><nrInsc>' + ::cNrInsc + '</nrInsc></ideEmpregador>'
    cXml += '<infoExclusao><tpEvento>' + ::cTpEvento + '</tpEvento>'
    cXml += '<nrRecEvt>' + ::cNrRecEvt  + '</nrRecEvt>'
@@ -308,7 +308,7 @@ RETURN Self
 METHOD SetEventoToxico( cDtExm, cCnpjLab, cCodSeqExame) CLASS TEsocialEventoS2221
    ::cDtExm      := DateXml(cDtExm)
    ::cCnpjLab    := SoNumeroCnpj( cCnpjLab ) 
-   ::cCodSeqExame:= AllTrim( cCodSeqExame )
+   ::cCodSeqExame:= Left( cCodSeqExame, 11 )
 RETURN Self
 
 METHOD ToXml() CLASS TEsocialEventoS2221
@@ -316,11 +316,11 @@ METHOD ToXml() CLASS TEsocialEventoS2221
 
    cXml := '<eSocial xmlns="http://www.esocial.gov.br/schema/evt/evtToxic/' + ::cVersaoSchema + '">'
    cXml += '<evtToxic Id="' + EsocialXmlEscape( ::cId ) + '">'
-   cXml += '<ideEvento><indRetif>' + ::cIndRetif + '</indRetif>'
+   cXml += '<ideEvento><indRetif>' + Iif( !( ::cIndRetif $ [1_2] ), [1], Left( ::cIndRetif, 1 ) ) + '</indRetif>'
    IF ! Empty( ::cNrRecibo ) .and. ::cIndRetif == "2"
-      cXml += '<nrRecibo>' + EsocialXmlEscape( ::cNrRecibo ) + '</nrRecibo>'
+      cXml += '<nrRecibo>' + EsocialXmlEscape( Left( ::cNrRecibo, 23 ) ) + '</nrRecibo>'
    ENDIF
-   cXml += '<tpAmb>' + ::cTpAmb + '</tpAmb><procEmi>' + ::cProcEmi + '</procEmi><verProc>' + EsocialXmlEscape( ::cVerProc ) + '</verProc></ideEvento>'
+   cXml += '<tpAmb>' + Iif( !( ::cTpAmb $ [1_2_7_8_9]), [2], Left( ::cTpAmb, 1 ) ) + '</tpAmb><procEmi>' + Iif( !( ::cProcemi $ [0_1_2_3_4_8_9_22] ), [1], Left( ::cProcemi, 2 ) ) + '</procEmi><verProc>' + EsocialXmlEscape( Left (::cVerProc, 20 ) ) + '</verProc></ideEvento>'
    cXml += '<ideEmpregador><tpInsc>' + ::cTpInsc + '</tpInsc><nrInsc>' + ::cNrInsc + '</nrInsc></ideEmpregador>'
    cXml += '<ideVinculo><cpfTrab>' + ::cCpfTrab + '</cpfTrab>'
    IF ! Empty( ::cMatricula )
@@ -410,9 +410,9 @@ RETURN Self
 METHOD SetAcidente( cDtAcid, cTpAcid, cHrAcid, cHrsTrabAntesAcid, cTpCat, cIndCatObito, cIndComunPolicia, cCodSitGeradora, cIniciatCAT, cObsCAT, cUltDiaTrab, cHouveAfast, cDtObito ) CLASS TEsocialEventoS2210
    ::cDtAcid := DateXml( cDtAcid )
    IF cTpAcid != Nil
-      ::cTpAcid := AllTrim( cTpAcid )
+      ::cTpAcid := Iif( !( cTpAcid $ [1_2_3]), [1], Left( cTpAcid, 1 ) )
    ENDIF
-   If ::cTpAcid == [1] .or. ::cTpAcid == [3]                 
+   If cTpAcid == [1] .or. cTpAcid == [3]                 
       IF cHrAcid != Nil
          ::cHrAcid := OnlyDigits( cHrAcid )
       ENDIF
@@ -421,28 +421,28 @@ METHOD SetAcidente( cDtAcid, cTpAcid, cHrAcid, cHrsTrabAntesAcid, cTpCat, cIndCa
       ENDIF
    Endif
    IF cTpCat != Nil
-      ::cTpCat := AllTrim( cTpCat )
+      ::cTpCat := Iif( !( cTpCat $ [1_2_3]), [1], Left( cTpCat, 1 ) )
    ENDIF
    IF cIndCatObito != Nil
-      ::cIndCatObito := Upper( AllTrim( cIndCatObito ) )
+      ::cIndCatObito := Iif( !( Upper( cIndCatObito ) $ [S_N]), [N], Left( Upper( cIndCatObito ), 1 ) ) 
    ENDIF
    IF cIndComunPolicia != Nil
-      ::cIndComunPolicia := Upper( AllTrim( cIndComunPolicia ) )
+      ::cIndComunPolicia := Iif( !( Upper( cIndComunPolicia ) $ [S_N]), [N], Left( Upper( cIndComunPolicia ), 1 ) )
    ENDIF
    IF cCodSitGeradora != Nil
-      ::cCodSitGeradora := OnlyDigits( cCodSitGeradora )
+      ::cCodSitGeradora := OnlyDigits( Left ( cCodSitGeradora, 9 ) )
    ENDIF
    IF cIniciatCAT != Nil
-      ::cIniciatCAT := AllTrim( cIniciatCAT )
+      ::cIniciatCAT := Iif( !( cIniciatCAT $ [1_2_3]), [1], Left( cIniciatCAT, 1 ) )
    ENDIF
    IF !Empty(cObsCAT)
-      ::cObsCAT := AllTrim( cObsCAT )
+      ::cObsCAT := Left( cObsCAT, 999 )
    ENDIF
    IF cUltDiaTrab != Nil
       ::cUltDiaTrab := DateXml( cUltDiaTrab )
    ENDIF
    IF cHouveAfast != Nil
-      ::cHouveAfast := Upper( AllTrim( cHouveAfast ) )
+      ::cHouveAfast := Iif( !( Upper( cHouveAfast ) $ [S_N]), [N], Left( Upper( cHouveAfast ), 1 ) ) 
    ENDIF
    IF cDtObito != Nil .and. cIndCatObito == [S]
       ::cDtObito := DateXml( cDtObito )
@@ -451,43 +451,43 @@ RETURN Self
 
 METHOD SetLocalAcidente( cTpLocal, cDscLocal, cTpLograd, cDscLograd, cNrLograd, cComplemento, cBairro, cCep, cCodMunic, cUf, cPais, cCodPostal, cTpInscLocal, cNrInscLocal ) CLASS TEsocialEventoS2210
    IF cTpLocal != Nil
-      ::cTpLocal := AllTrim( cTpLocal )
+      ::cTpLocal := Iif( !( cTpLocal $ [1_2_3_4_5_6_9]), [1], Left( cTpLocal, 1 ) )
    ENDIF
    IF cDscLocal != Nil
-      ::cDscLocal := AllTrim( cDscLocal )
+      ::cDscLocal := Left ( cDscLocal, 255 )
    ENDIF
    IF cTpLograd != Nil
-      ::cTpLograd := AllTrim( cTpLograd )
+      ::cTpLograd := Left( cTpLograd, 4 )
    ENDIF
    IF cDscLograd != Nil
-      ::cDscLograd := AllTrim( cDscLograd )
+      ::cDscLograd := Left( cDscLograd, 100 )
    ENDIF
    IF cNrLograd != Nil
-      ::cNrLograd := AllTrim( cNrLograd )
+      ::cNrLograd := Left( cNrLograd, 10 )
    ENDIF
    IF cComplemento != Nil
-      ::cComplemento := AllTrim( cComplemento )
+      ::cComplemento := Left( cComplemento, 30 )
    ENDIF
    IF cBairro != Nil
-      ::cBairro := AllTrim( cBairro )
+      ::cBairro := Left( cBairro, 90 )
    ENDIF
    IF cCep != Nil .and. (cTpLocal == [1] .or. cTpLocal == [3] .or. cTpLocal == [5])
-      ::cCep := OnlyDigits( cCep )
+      ::cCep := OnlyDigits( Left( cCep, 8 ) )
    ENDIF
    IF cCodMunic != Nil .and. cTpLocal # [2]
-      ::cCodMunic := OnlyDigits( cCodMunic )
-      IF cUf != Nil
-         ::cUf := Upper( AllTrim( cUf ) )
+      ::cCodMunic := OnlyDigits( Left( cCodMunic, 7 ) )
+      IF cUf != Nil       
+         ::cUf := Iif( !( Upper( cUf ) $ [AC_AL_AP_AM_BA_CE_DF_ES_GO_MA,MT_MS_MG_PA_PB_PR_PE_PI_RJ_RN_RS_RO_RR_SC_SP,SE_TO]), [SP], Left( Upper( cUf ), 2 ) )  
       ENDIF
    ENDIF
    IF cPais != Nil .and. cTpLocal == [2]
-      ::cPais := OnlyDigits( cPais )
+      ::cPais := OnlyDigits( Left( cPais, 3 ) )
       IF cCodPostal != Nil
-         ::cCodPostal := AllTrim( cCodPostal )
+         ::cCodPostal := Left( cCodPostal, 12 )
       ENDIF
    ENDIF
-   IF cTpInscLocal != Nil
-      ::cTpInscLocal := AllTrim( cTpInscLocal )
+   IF cTpInscLocal != Nil   
+      ::cTpInscLocal := Iif( !( cTpInscLocal $ [1_3_4]), [1], Left( cTpInscLocal, 1 ) )
    ENDIF
    IF cNrInscLocal != Nil
       ::cNrInscLocal := SoNumeroCnpj( cNrInscLocal )
@@ -495,39 +495,43 @@ METHOD SetLocalAcidente( cTpLocal, cDscLocal, cTpLograd, cDscLograd, cNrLograd, 
 RETURN Self
 
 METHOD SetParteAtingida( cCodParteAting, cLateralidade ) CLASS TEsocialEventoS2210
-   ::cCodParteAting := OnlyDigits( cCodParteAting )
-   ::cLateralidade := AllTrim( cLateralidade )
+   ::cCodParteAting := OnlyDigits( Left( cCodParteAting, 9 ) )
+   ::cLateralidade := Iif( !( cLateralidade $ [0_1_2_3]), [1], Left( cLateralidade, 1 ) )
 RETURN Self
 
 METHOD SetAgenteCausador( cCodAgntCausador ) CLASS TEsocialEventoS2210
-   ::cCodAgntCausador := OnlyDigits( cCodAgntCausador )
+   ::cCodAgntCausador := OnlyDigits( Left( cCodAgntCausador, 9 ) )
 RETURN Self
 
 METHOD SetAtestado( cDtAtendimento, cHrAtendimento, cIndInternacao, cDurTrat, cIndAfast, cDscLesao, cCodCID, cNmEmit, cIdeOC, cNrOC, cUfOC, cDscCompLesao, cDiagProvavel, cObservacao ) CLASS TEsocialEventoS2210
    ::cDtAtendimento := DateXml( cDtAtendimento )
-   ::cHrAtendimento := OnlyDigits( cHrAtendimento )
-   ::cIndInternacao := Upper( AllTrim( cIndInternacao ) )
-   ::cDurTrat := OnlyDigits( cDurTrat )
-   ::cIndAfast := Upper( AllTrim( cIndAfast ) )
-   ::cDscLesao := OnlyDigits( cDscLesao )
-   ::cCodCID := Upper( AllTrim( cCodCID ) )
-   ::cNmEmit := AllTrim( cNmEmit )
-   ::cIdeOC := AllTrim( cIdeOC )
-   ::cNrOC := AllTrim( cNrOC )
-   ::cUfOC := Upper( AllTrim( cUfOC ) )
+   ::cHrAtendimento := OnlyDigits( Left( cHrAtendimento, 4 ) )
+   ::cIndInternacao := Iif( !( Upper( cIndInternacao ) $ [S_N]), [N], Left( Upper( cIndInternacao ), 1 ) )  
+   ::cDurTrat := OnlyDigits( Left( cDurTrat, 4 ) )
+   ::cIndAfast := Iif( !( Upper( cIndAfast ) $ [S_N]), [N], Left( Upper( cIndAfast ), 1 ) ) 
+   ::cDscLesao := OnlyDigits( Left( cDscLesao, 9 ) )
+   ::cCodCID := Upper( Left( cCodCID, 4 ) )
+   ::cNmEmit := Left( cNmEmit, 70 )
+   ::cIdeOC := Iif( !( cIdeOC $ [1_2_3]), [1], Left( cIdeOC, 1 ) )
+   ::cNrOC := OnlyDigits( Left( cNrOC, 14 ) )
+   IF !Empty(cIdeOC) .and. (cIdeOC == [1] .or. cIdeOC == [2])
+      ::cUfOC := Iif( !( Upper( cUfOC ) $ [AC_AL_AP_AM_BA_CE_DF_ES_GO_MA,MT_MS_MG_PA_PB_PR_PE_PI_RJ_RN_RS_RO_RR_SC_SP,SE_TO]), [SP], Left( Upper( cUfOC ), 2 ) ) 
+   ENDIF
    IF cDscCompLesao != Nil
-      ::cDscCompLesao := AllTrim( cDscCompLesao )
+      ::cDscCompLesao := Left( cDscCompLesao, 200 )
    ENDIF
    IF cDiagProvavel != Nil
-      ::cDiagProvavel := AllTrim( cDiagProvavel )
+      ::cDiagProvavel := Left( cDiagProvavel, 100 )
    ENDIF
    IF cObservacao != Nil
-      ::cObservacao := AllTrim( cObservacao )
+      ::cObservacao := Left( cObservacao, 255 )
    ENDIF
 RETURN Self
 
 METHOD SetCatOrigem( cNrRecCatOrig ) CLASS TEsocialEventoS2210
-   ::cNrRecCatOrig := AllTrim( cNrRecCatOrig )
+   IF cNrRecCatOrig != Nil
+      ::cNrRecCatOrig := Left( cNrRecCatOrig, 23 )
+   ENDIF
 RETURN Self
 
 METHOD ToXml() CLASS TEsocialEventoS2210
@@ -535,11 +539,11 @@ METHOD ToXml() CLASS TEsocialEventoS2210
 
    cXml := '<eSocial xmlns="http://www.esocial.gov.br/schema/evt/evtCAT/' + ::cVersaoSchema + '">'
    cXml += '<evtCAT Id="' + EsocialXmlEscape( ::cId ) + '">'
-   cXml += '<ideEvento><indRetif>' + ::cIndRetif + '</indRetif>'
+   cXml += '<ideEvento><indRetif>' + Iif( !( ::cIndRetif $ [1_2] ), [1], Left( ::cIndRetif, 1 ) ) + '</indRetif>'
    IF ! Empty( ::cNrRecibo ) .and. ::cIndRetif == "2"
-      cXml += '<nrRecibo>' + EsocialXmlEscape( ::cNrRecibo ) + '</nrRecibo>'
+      cXml += '<nrRecibo>' + EsocialXmlEscape( Left( ::cNrRecibo, 23 ) ) + '</nrRecibo>'
    ENDIF
-   cXml += '<tpAmb>' + ::cTpAmb + '</tpAmb><procEmi>' + ::cProcEmi + '</procEmi><verProc>' + EsocialXmlEscape( ::cVerProc ) + '</verProc></ideEvento>'
+   cXml += '<tpAmb>' + Iif( !( ::cTpAmb $ [1_2_7_8_9]), [2], Left( ::cTpAmb, 1 ) ) + '</tpAmb><procEmi>' + Iif( !( ::cProcemi $ [0_1_2_3_4_8_9_22] ), [1], Left( ::cProcemi, 2 ) ) + '</procEmi><verProc>' + EsocialXmlEscape( Left (::cVerProc, 20 ) ) + '</verProc></ideEvento>'
    cXml += '<ideEmpregador><tpInsc>' + ::cTpInsc + '</tpInsc><nrInsc>' + ::cNrInsc + '</nrInsc></ideEmpregador>'
    cXml += '<ideVinculo><cpfTrab>' + ::cCpfTrab + '</cpfTrab>'
    IF ! Empty( ::cMatricula )
@@ -672,12 +676,12 @@ METHOD SetAmbienteTrabalho( cLocalAmb, cDscSetor, cTpInsc, cNrInsc ) CLASS TEsoc
    ::aAmbientes := {}
 RETURN ::AddAmbienteTrabalho( cLocalAmb, cDscSetor, cTpInsc, cNrInsc )
 
-METHOD AddAmbienteTrabalho( cLocalAmb, cDscSetor, cTpInsc, cNrInsc ) CLASS TEsocialEventoS2240
-   AAdd( ::aAmbientes, { AllTrim( cLocalAmb ), AllTrim( cDscSetor ), AllTrim( cTpInsc ), SoNumeroCnpj( cNrInsc ) } )
+METHOD AddAmbienteTrabalho( cLocalAmb, cDscSetor, cTpInsc, cNrInsc ) CLASS TEsocialEventoS2240 
+   AAdd( ::aAmbientes, { Iif( !( cLocalAmb $ [1_2] ), [2], Left( cLocalAmb, 1 ) ), Left( cDscSetor, 100 ), Iif( !( cTpInsc $ [1_3_4] ), [2], Left( cTpInsc, 1 ) ), SoNumeroCnpj( cNrInsc ) } )
 RETURN Self
 
 METHOD SetAtividade( cDscAtivDes ) CLASS TEsocialEventoS2240
-   ::cDscAtivDes := AllTrim( cDscAtivDes )
+   ::cDscAtivDes := Left( cDscAtivDes, 999 )
 RETURN Self
 
 METHOD SetAgente( cCodAgNoc, cDscAgNoc, cTpAval, cIntConc, cLimTol, cUnMed, cTecMedicao, cNrProcJud, cUtilizEPC, cEficEpc, cUtilizEPI, cEficEpi ) CLASS TEsocialEventoS2240
@@ -685,23 +689,23 @@ METHOD SetAgente( cCodAgNoc, cDscAgNoc, cTpAval, cIntConc, cLimTol, cUnMed, cTec
 RETURN ::AddAgente( cCodAgNoc, cDscAgNoc, cTpAval, cIntConc, cLimTol, cUnMed, cTecMedicao, cNrProcJud, cUtilizEPC, cEficEpc, cUtilizEPI, cEficEpi )
 
 METHOD AddAgente( cCodAgNoc, cDscAgNoc, cTpAval, cIntConc, cLimTol, cUnMed, cTecMedicao, cNrProcJud, cUtilizEPC, cEficEpc, cUtilizEPI, cEficEpi ) CLASS TEsocialEventoS2240
-   AAdd( ::aAgentes, { AllTrim( cCodAgNoc ), AllTrim( hb_DefaultValue( cDscAgNoc, "" ) ), AllTrim( hb_DefaultValue( cTpAval, "" ) ), ;
-      AllTrim( hb_DefaultValue( cIntConc, "" ) ), AllTrim( hb_DefaultValue( cLimTol, "" ) ), AllTrim( hb_DefaultValue( cUnMed, "" ) ), ;
-      AllTrim( hb_DefaultValue( cTecMedicao, "" ) ), AllTrim( hb_DefaultValue( cNrProcJud, "" ) ), AllTrim( hb_DefaultValue( cUtilizEPC, "" ) ), ;
-      Upper( AllTrim( hb_DefaultValue( cEficEpc, "" ) ) ), AllTrim( hb_DefaultValue( cUtilizEPI, "" ) ), Upper( AllTrim( hb_DefaultValue( cEficEpi, "" ) ) ) } )
-RETURN Self
+   AAdd( ::aAgentes, { Left( cCodAgNoc, 9 ), AllTrim( hb_DefaultValue( Left(cDscAgNoc, 100 ), "" ) ), AllTrim( hb_DefaultValue( Iif( !( cTpAval $ [1_2] ), [1], Left( cTpAval, 1 ) ), "" ) ), ;
+      AllTrim( hb_DefaultValue( Left( cIntConc, 10 ), "" ) ), AllTrim( hb_DefaultValue( Left( cLimTol, 10 ), "" ) ), AllTrim( hb_DefaultValue( cUnMed, "" ) ), ;
+      AllTrim( hb_DefaultValue( Left( cTecMedicao, 40 ), "" ) ), AllTrim( hb_DefaultValue( Left( cNrProcJud, 21 ), "" ) ), AllTrim( hb_DefaultValue( Iif( !( cUtilizEPC $ [0_1_2] ), [0], Left( cUtilizEPC, 1 ) ), "" ) ), ; 
+      Upper( AllTrim( hb_DefaultValue( Iif( !( Upper( cEficEpc ) $ [S_N]), [N], Left( Upper( cEficEpc ), 1 ) ), "" ) ) ), AllTrim( hb_DefaultValue( Iif( !( cUtilizEPI $ [0_1_2] ), [0], Left( cUtilizEPI, 1 ) ), "" ) ), Upper( AllTrim( hb_DefaultValue( Iif( !( Upper( cEficEpi ) $ [S_N]), [N], Left( Upper( cEficEpi ), 1 ) ), "" ) ) ) } ) 
+RETURN Self 
 
 METHOD SetRespReg( cCpfResp, cIdeOC, cDscOC, cNrOC, cUfOC ) CLASS TEsocialEventoS2240
    ::aRespReg := {}
 RETURN ::AddRespReg( cCpfResp, cIdeOC, cDscOC, cNrOC, cUfOC )
 
 METHOD AddRespReg( cCpfResp, cIdeOC, cDscOC, cNrOC, cUfOC ) CLASS TEsocialEventoS2240
-   AAdd( ::aRespReg, { OnlyDigits( cCpfResp ), AllTrim( hb_DefaultValue( cIdeOC, "" ) ), AllTrim( hb_DefaultValue( cDscOC, "" ) ), ;
-      AllTrim( hb_DefaultValue( cNrOC, "" ) ), Upper( AllTrim( hb_DefaultValue( cUfOC, "" ) ) ) } )
+   AAdd( ::aRespReg, { OnlyDigits( cCpfResp ), AllTrim( hb_DefaultValue( Iif( !( cIdeOC $ [1_4_9]), [1], Left( cIdeOC, 1 ) ), "" ) ), AllTrim( hb_DefaultValue( Left( cDscOC, 20 ), "" ) ), ;
+      AllTrim( hb_DefaultValue( Left( cNrOC, 14 ), "" ) ), hb_DefaultValue( Iif( !( Upper( cUfOC ) $ [AC_AL_AP_AM_BA_CE_DF_ES_GO_MA,MT_MS_MG_PA_PB_PR_PE_PI_RJ_RN_RS_RO_RR_SC_SP,SE_TO]), [SP], Left( Upper( cUfOC ), 2 ) ), "" ) } )
 RETURN Self
 
 METHOD SetObs( cObsCompl ) CLASS TEsocialEventoS2240
-   ::cObsCompl := AllTrim( cObsCompl )
+   ::cObsCompl := Left( cObsCompl, 999 )
 RETURN Self
 
 METHOD ToXml() CLASS TEsocialEventoS2240
@@ -719,11 +723,11 @@ METHOD ToXml() CLASS TEsocialEventoS2240
 
    cXml := '<eSocial xmlns="http://www.esocial.gov.br/schema/evt/evtExpRisco/' + ::cVersaoSchema + '">'
    cXml += '<evtExpRisco Id="' + EsocialXmlEscape( ::cId ) + '">'
-   cXml += '<ideEvento><indRetif>' + ::cIndRetif + '</indRetif>'
+   cXml += '<ideEvento><indRetif>' + Iif( !( ::cIndRetif $ [1_2] ), [1], Left( ::cIndRetif, 1 ) ) + '</indRetif>'
    IF ! Empty( ::cNrRecibo ) .and. ::cIndRetif == "2"
-      cXml += '<nrRecibo>' + EsocialXmlEscape( ::cNrRecibo ) + '</nrRecibo>'
+      cXml += '<nrRecibo>' + EsocialXmlEscape( Left( ::cNrRecibo, 23 ) ) + '</nrRecibo>'
    ENDIF
-   cXml += '<tpAmb>' + ::cTpAmb + '</tpAmb><procEmi>' + ::cProcEmi + '</procEmi><verProc>' + EsocialXmlEscape( ::cVerProc ) + '</verProc></ideEvento>'
+   cXml += '<tpAmb>' + Iif( !( ::cTpAmb $ [1_2_7_8_9]), [2], Left( ::cTpAmb, 1 ) ) + '</tpAmb><procEmi>' + Iif( !( ::cProcemi $ [0_1_2_3_4_8_9_22] ), [1], Left( ::cProcemi, 2 ) ) + '</procEmi><verProc>' + EsocialXmlEscape( Left (::cVerProc, 20 ) ) + '</verProc></ideEvento>'
    cXml += '<ideEmpregador><tpInsc>' + ::cTpInsc + '</tpInsc><nrInsc>' + ::cNrInsc + '</nrInsc></ideEmpregador>'
    cXml += '<ideVinculo><cpfTrab>' + ::cCpfTrab + '</cpfTrab>'
    IF ! Empty( ::cMatricula )
@@ -942,7 +946,7 @@ METHOD SetCampos( aCampos ) CLASS TEsocialEventoXml
 RETURN Self
 
 METHOD SetAmbiente( cTpAmb ) CLASS TEsocialEventoXml
-RETURN ::SetCampo( "tpAmb", cTpAmb )
+RETURN ::SetCampo( "tpAmb", Iif( !( cTpAmb $ [1_2_7_8_9]), [2], Left( cTpAmb, 1 ) ) )
 
 METHOD SetProcesso( cProcEmi, cVerProc ) CLASS TEsocialEventoXml
    ::SetCampo( "procEmi", hb_DefaultValue( cProcEmi, "1" ) )
