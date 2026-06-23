@@ -5,7 +5,7 @@
  * AUTOR    : Franklin Brasil                                                *
  * ALTERADO : Marcelo Antonio Lazzaro Carli                                  *
  * DATA     : 29.05.2026                                                     *
- * ULT. ALT.: 18.06.2026                                                     *
+ * ULT. ALT.: 22.06.2026                                                     *
  *****************************************************************************/
 #include "hbclass.ch"
 
@@ -698,6 +698,7 @@ METHOD SetAgente( cCodAgNoc, cDscAgNoc, cTpAval, cIntConc, cLimTol, cUnMed, cTec
    ::aAgentes := {}
 RETURN ::AddAgente( cCodAgNoc, cDscAgNoc, cTpAval, cIntConc, cLimTol, cUnMed, cTecMedicao, cNrProcJud, cUtilizEPC, cEficEpc, cUtilizEPI, cEficEpi )
 
+
 METHOD AddAgente( cCodAgNoc, cDscAgNoc, cTpAval, cIntConc, cLimTol, cUnMed, cTecMedicao, cNrProcJud, cUtilizEPC, cEficEpc, cUtilizEPI, cEficEpi ) CLASS TEsocialEventoS2240
    AAdd( ::aAgentes, { Alltrim( Left( cCodAgNoc, 9 ) ), Iif (cCodAgNoc == [01.01.001] .or. cCodAgNoc == [01.02.001] .or. cCodAgNoc == [01.03.001] .or. cCodAgNoc == [01.04.001] .or. cCodAgNoc == [01.05.001] .or. cCodAgNoc == [01.06.001] .or. cCodAgNoc == [01.07.001] .or. cCodAgNoc == [01.08.001] .or. cCodAgNoc == [01.09.001] .or. cCodAgNoc == [01.10.001] .or. cCodAgNoc == [01.12.001] .or. cCodAgNoc == [01.13.001] .or. cCodAgNoc == [01.14.001] .or. cCodAgNoc == [01.15.001] .or. cCodAgNoc == [01.16.001] .or. cCodAgNoc == [01.17.001] .or. cCodAgNoc == [01.18.001] .or. cCodAgNoc == [05.01.001], Alltrim( Left(cDscAgNoc, 100 ) ), ""), ;
       Iif( cCodAgNoc # [09.01.001], Iif( !( cTpAval $ [1_2] ), [1], Left( cTpAval, 1 ) ), "" ) , ;
@@ -705,17 +706,21 @@ METHOD AddAgente( cCodAgNoc, cDscAgNoc, cTpAval, cIntConc, cLimTol, cUnMed, cTec
       Iif( cTpAval == [1], AllTrim( Left( cUnMed, 2 ) ), "" ), ;
       Iif( cTpAval == [1], Alltrim( Left( cTecMedicao, 40 ) ), "" ), ;
       Iif( cTpAval == [1] .and. cCodAgNoc == [05.01.001], Alltrim( Left( cNrProcJud, 21 ) ), "" ), ;
-      Iif( !( cUtilizEPC $ [0_1_2] ), [0], Left( cUtilizEPC, 1 )), ; 
-      Iif( cUtilizEPC == [2], Iif( !( Upper( cEficEpc ) $ [S_N]), [N], Left( Upper( cEficEpc ), 1 ) ), "" ), ;
-      Iif( !( cUtilizEPI $ [0_1_2] ), [0], Left( cUtilizEPI, 1 ) ), ; 
-      Iif( cUtilizEPI == [2], Iif( !( Upper( cEficEpi ) $ [S_N]), [N], Left( Upper( cEficEpi ), 1 ) ), "" ), {} } ) 
+      Iif( cCodAgNoc # [09.01.001], Iif( !( cUtilizEPC $ [0_1_2] ), [0], Left( cUtilizEPC, 1 ) ), "" ) , ;
+      Iif( cCodAgNoc # [09.01.001], Iif( cUtilizEPC == [2], Iif( !( Upper( cEficEpc ) $ [S_N]), [N], Left( Upper( cEficEpc ), 1 ) ), "" ), "" ) , ;
+      Iif( cCodAgNoc # [09.01.001], Iif( !( cUtilizEPI $ [0_1_2] ), [0], Left( cUtilizEPI, 1 ) ), "" ) , ;
+      Iif( cCodAgNoc # [09.01.001], Iif( cUtilizEPI == [2], Iif( !( Upper( cEficEpi ) $ [S_N]), [N], Left( Upper( cEficEpi ), 1 ) ), "" ), "" ) , ;
+      {} } ) // <-- Aqui foi adicionado o array vazio na posição 13
 RETURN Self 
 
 METHOD SetEpi( cDocVal, cMedProtecao, cCondFuncto, cUsoInint, cPrzValid, cPeriodicTroca, cHigienizacao) CLASS TEsocialEventoS2240
    LOCAL nAg := Len( ::aAgentes )
 
+   // Limpa o array geral de contingência
    ::aEpis := {}
-   IF nAg > 0 .AND. Len( ::aAgentes[ nAg ] ) >= 13
+   
+   // Se existem agentes, limpa o array interno do último agente para receber os novos EPIs dele
+   IF nAg > 0
       ::aAgentes[ nAg, 13 ] := {}
    ENDIF
 RETURN ::AddEpi( cDocVal, cMedProtecao, cCondFuncto, cUsoInint, cPrzValid, cPeriodicTroca, cHigienizacao )
@@ -731,7 +736,9 @@ METHOD AddEpi( cDocVal, cMedProtecao, cCondFuncto, cUsoInint, cPrzValid, cPeriod
              Iif( !( Upper( cHigienizacao ) $ [S_N]), [N], Left( Upper( cHigienizacao ), 1 ) ) }
 
    AAdd( ::aEpis, aEpi )
-   IF nAg > 0 .AND. Len( ::aAgentes[ nAg ] ) >= 13
+   
+   // Correção 2: Insere o EPI diretamente no escopo do Agente Atual de forma isolada
+   IF nAg > 0
       AAdd( ::aAgentes[ nAg, 13 ], aEpi )
    ENDIF
 RETURN Self
@@ -796,6 +803,8 @@ METHOD ToXml() CLASS TEsocialEventoS2240
    FOR nI := 1 TO Len( ::aAgentes )
       aItem := ::aAgentes[ nI ]
       aEpisAgente := {}
+      
+      // Correção 3: Validação precisa da sub-matriz de EPIs do Agente
       IF Len( aItem ) >= 13 .AND. ValType( aItem[ 13 ] ) == "A" .AND. Len( aItem[ 13 ] ) > 0
          aEpisAgente := aItem[ 13 ]
       ELSE
@@ -803,50 +812,58 @@ METHOD ToXml() CLASS TEsocialEventoS2240
       ENDIF
 
       cXml += '<agNoc><codAgNoc>' + aItem[ 1 ] + '</codAgNoc>'
-      IF ! Empty( aItem[ 2 ] )
-         cXml += '<dscAgNoc>' + EsocialXmlEscape( aItem[ 2 ] ) + '</dscAgNoc>'
-      ENDIF
-      IF ! Empty( aItem[ 3 ] )
-         cXml += '<tpAval>' + aItem[ 3 ] + '</tpAval>'
-      ENDIF
-      IF ! Empty( aItem[ 4 ] )
-         cXml += '<intConc>' + aItem[ 4 ] + '</intConc>'
-      ENDIF
-      IF ! Empty( aItem[ 5 ] )
-         cXml += '<limTol>' + aItem[ 5 ] + '</limTol>'
-      ENDIF
-      IF ! Empty( aItem[ 6 ] )
-         cXml += '<unMed>' + aItem[ 6 ] + '</unMed>'
-      ENDIF
-      IF ! Empty( aItem[ 7 ] )
-         cXml += '<tecMedicao>' + EsocialXmlEscape( aItem[ 7 ] ) + '</tecMedicao>'
-      ENDIF
-      IF ! Empty( aItem[ 8 ] )
-         cXml += '<nrProcJud>' + aItem[ 8 ] + '</nrProcJud>'
-      ENDIF
 
-      IF ! Empty( aItem[ 9 ] ) .OR. ! Empty( aItem[ 11 ] ) .OR. Len( aEpisAgente ) > 0
-         cXml += '<epcEpi>'
-         IF ! Empty( aItem[ 9 ] )
-            cXml += '<utilizEPC>' + aItem[ 9 ] + '</utilizEPC>'
-            IF ! Empty( aItem[ 10 ] )
-               cXml += '<eficEpc>' + aItem[ 10 ] + '</eficEpc>'
-            ENDIF
+      IF Alltrim(aItem[ 1 ]) # [09.01.001]
+         IF ! Empty( aItem[ 2 ] )
+            cXml += '<dscAgNoc>' + EsocialXmlEscape( aItem[ 2 ] ) + '</dscAgNoc>'
          ENDIF
-         IF ! Empty( aItem[ 11 ] )
-            cXml += '<utilizEPI>' + aItem[ 11 ] + '</utilizEPI>'
-            IF ! Empty( aItem[ 12 ] )
-               cXml += '<eficEpi>' + aItem[ 12 ] + '</eficEpi>'
-            ENDIF
+         IF ! Empty( aItem[ 3 ] )
+            cXml += '<tpAval>' + aItem[ 3 ] + '</tpAval>'
          ENDIF
-         FOR nE := 1 TO Len( aEpisAgente )
-            aItem1 := aEpisAgente[ nE ]
-            cXml += '<epi><docAval>' + EsocialXmlEscape( aItem1[ 1 ] ) + '</docAval></epi>'
-            cXml += '<epiCompl><medProtecao>' + aItem1[ 2 ] + '</medProtecao><condFuncto>' + aItem1[ 3 ] + '</condFuncto>'
-            cXml += '<usoInint>' + aItem1[ 4 ] + '</usoInint><przValid>' + aItem1[ 5 ] + '</przValid>'
-            cXml += '<periodicTroca>' + aItem1[ 6 ] + '</periodicTroca><higienizacao>' + aItem1[ 7 ] + '</higienizacao></epiCompl>'
-         NEXT
-         cXml += '</epcEpi>'
+         IF ! Empty( aItem[ 4 ] )
+            cXml += '<intConc>' + aItem[ 4 ] + '</intConc>'
+         ENDIF
+         IF ! Empty( aItem[ 5 ] )
+            cXml += '<limTol>' + aItem[ 5 ] + '</limTol>'
+         ENDIF
+         IF ! Empty( aItem[ 6 ] )
+            cXml += '<unMed>' + aItem[ 6 ] + '</unMed>'
+         ENDIF
+         IF ! Empty( aItem[ 7 ] )
+            cXml += '<tecMedicao>' + EsocialXmlEscape( aItem[ 7 ] ) + '</tecMedicao>'
+         ENDIF
+         IF ! Empty( aItem[ 8 ] )
+            cXml += '<nrProcJud>' + aItem[ 8 ] + '</nrProcJud>'
+         ENDIF
+
+         IF ! Empty( aItem[ 9 ] ) .OR. ! Empty( aItem[ 11 ] ) .OR. Len( aEpisAgente ) > 0
+            cXml += '<epcEpi>'
+            IF ! Empty( aItem[ 9 ] )
+               cXml += '<utilizEPC>' + aItem[ 9 ] + '</utilizEPC>'
+               IF ! Empty( aItem[ 10 ] )
+                  cXml += '<eficEpc>' + aItem[ 10 ] + '</eficEpc>'
+               ENDIF
+            ENDIF
+            IF ! Empty( aItem[ 11 ] )
+               cXml += '<utilizEPI>' + aItem[ 11 ] + '</utilizEPI>'
+               IF ! Empty( aItem[ 12 ] )
+                  cXml += '<eficEpi>' + aItem[ 12 ] + '</eficEpi>'
+               ENDIF
+            ENDIF
+            
+            // Loop de EPIs agora lerá o array isolado por agente 'aEpisAgente'
+            FOR nE := 1 TO Len( aEpisAgente )
+                aItem1 := aEpisAgente[ nE ]
+                cXml += '<epi><docAval>' + EsocialXmlEscape( aItem1[ 1 ] ) + '</docAval></epi>'
+            NEXT
+            IF Len( aEpisAgente ) > 0
+               aItem1 := aEpisAgente[ 1 ]
+               cXml += '<epiCompl><medProtecao>' + aItem1[ 2 ] + '</medProtecao><condFuncto>' + aItem1[ 3 ] + '</condFuncto>'
+               cXml += '<usoInint>' + aItem1[ 4 ] + '</usoInint><przValid>' + aItem1[ 5 ] + '</przValid>'
+               cXml += '<periodicTroca>' + aItem1[ 6 ] + '</periodicTroca><higienizacao>' + aItem1[ 7 ] + '</higienizacao></epiCompl>'
+            ENDIF
+            cXml += '</epcEpi>'
+         ENDIF
       ENDIF
 
       cXml += '</agNoc>'
