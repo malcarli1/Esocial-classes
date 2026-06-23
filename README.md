@@ -20,7 +20,7 @@ Compatibilidade Total: Pronto para compilação com Harbour 3.2+ utilizando o co
 Integrar os eventos do eSocial ao seu sistema ERP se resume a poucas linhas de código:
 
 Snippet de código
-
+```
 #include "hbclass.ch"
 
 PROCEDURE Main()
@@ -50,10 +50,11 @@ PROCEDURE Main()
    ? "XML gerado com sucesso!" 
    
 RETURN
-
+```
 🏗️ Como Compilar
 O projeto utiliza o gerenciador de compilação hbmk2 nativo do Harbour. Certifique-se de vincular as bibliotecas de sistema do Windows responsáveis pela criptografia:
 
+```
 Bash
 @echo off
 setlocal
@@ -66,7 +67,7 @@ C:\MiniGUI\Harbour\bin\hbmk2.exe demo_classes.prg esocial_classes.prg esocial_cr
 
 rem pause
 endlocal
-
+```
 👥 Autores e Filosofia do Projeto
 Este projeto nasceu da união de esforços de desenvolvedores que acreditam na evolução contínua da linguagem Harbour para sistemas de missão crítica corporativos:
 
