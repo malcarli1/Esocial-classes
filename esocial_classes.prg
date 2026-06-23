@@ -5,16 +5,16 @@
  * AUTOR    : Franklin Brasil                                                *
  * ALTERADO : Marcelo Antonio Lazzaro Carli                                  *
  * DATA     : 29.05.2026                                                     *
- * ULT. ALT.: 22.06.2026                                                     *
+ * ULT. ALT.: 23.06.2026                                                     *
  *****************************************************************************/
 #include "hbclass.ch"
 
-#define ESOCIAL_URL_ENVIO_RESTRITA "https://webservices.producaorestrita.esocial.gov.br/servicos/empregador/enviarloteeventos/WsEnviarLoteEventos.svc"
+#define ESOCIAL_URL_ENVIO_RESTRITA    "https://webservices.producaorestrita.esocial.gov.br/servicos/empregador/enviarloteeventos/WsEnviarLoteEventos.svc"
 #define ESOCIAL_URL_CONSULTA_RESTRITA "https://webservices.producaorestrita.esocial.gov.br/servicos/empregador/consultarloteeventos/WsConsultarLoteEventos.svc"
-#define ESOCIAL_URL_ENVIO_PRODUCAO "https://webservices.envio.esocial.gov.br/servicos/empregador/enviarloteeventos/WsEnviarLoteEventos.svc"
+#define ESOCIAL_URL_ENVIO_PRODUCAO    "https://webservices.envio.esocial.gov.br/servicos/empregador/enviarloteeventos/WsEnviarLoteEventos.svc"
 #define ESOCIAL_URL_CONSULTA_PRODUCAO "https://webservices.consulta.esocial.gov.br/servicos/empregador/consultarloteeventos/WsConsultarLoteEventos.svc"
-#define ESOCIAL_SOAP_ENVIO "http://www.esocial.gov.br/servicos/empregador/lote/eventos/envio/v1_1_0/ServicoEnviarLoteEventos/EnviarLoteEventos"
-#define ESOCIAL_SOAP_CONSULTA "http://www.esocial.gov.br/servicos/empregador/lote/eventos/envio/consulta/retornoProcessamento/v1_1_0/ServicoConsultarLoteEventos/ConsultarLoteEventos"
+#define ESOCIAL_SOAP_ENVIO            "http://www.esocial.gov.br/servicos/empregador/lote/eventos/envio/v1_1_0/ServicoEnviarLoteEventos/EnviarLoteEventos"
+#define ESOCIAL_SOAP_CONSULTA         "http://www.esocial.gov.br/servicos/empregador/lote/eventos/envio/consulta/retornoProcessamento/v1_1_0/ServicoConsultarLoteEventos/ConsultarLoteEventos"
 
 STATIC s_cEsocialValidacaoLastError := ""
 
@@ -133,7 +133,7 @@ RETURN Self
 
 METHOD SetEmpregador( cTpInsc, cNrInsc ) CLASS TEsocialEventoS2220
    ::cTpInsc := Iif( !( cTpInsc $ [1_2] ), [2], Left( cTpInsc, 1 ) )
-   ::cNrInscId := SoNumeroCnpj( cNrInsc )
+   ::cNrInscId := fSoNumeroCnpj( cNrInsc )
    ::cNrInsc := ::cNrInscId
    IF ::cTpInsc == "1" .AND. Len( ::cNrInsc ) > 8
       ::cNrInsc := Alltrim( Left( ::cNrInsc, 8 ) )
@@ -307,7 +307,7 @@ RETURN Self
 
 METHOD SetEventoToxico( cDtExm, cCnpjLab, cCodSeqExame) CLASS TEsocialEventoS2221
    ::cDtExm      := DateXml(cDtExm)
-   ::cCnpjLab    := SoNumeroCnpj( cCnpjLab ) 
+   ::cCnpjLab    := fSoNumeroCnpj( cCnpjLab ) 
    ::cCodSeqExame:= Alltrim( Left( cCodSeqExame, 11 ) )
 RETURN Self
 
@@ -490,7 +490,7 @@ METHOD SetLocalAcidente( cTpLocal, cDscLocal, cTpLograd, cDscLograd, cNrLograd, 
       ::cTpInscLocal := Iif( !( cTpInscLocal $ [1_3_4]), [1], Left( cTpInscLocal, 1 ) )
    ENDIF
    IF cNrInscLocal != Nil
-      ::cNrInscLocal := SoNumeroCnpj( cNrInscLocal )
+      ::cNrInscLocal := fSoNumeroCnpj( cNrInscLocal )
    ENDIF
 RETURN Self
 
@@ -687,7 +687,7 @@ METHOD SetAmbienteTrabalho( cLocalAmb, cDscSetor, cTpInsc, cNrInsc ) CLASS TEsoc
 RETURN ::AddAmbienteTrabalho( cLocalAmb, cDscSetor, cTpInsc, cNrInsc )
 
 METHOD AddAmbienteTrabalho( cLocalAmb, cDscSetor, cTpInsc, cNrInsc ) CLASS TEsocialEventoS2240 
-   AAdd( ::aAmbientes, { Iif( !( cLocalAmb $ [1_2] ), [1], Left( cLocalAmb, 1 ) ), Alltrim( Left( cDscSetor, 100 ) ), Iif( !( cTpInsc $ [1_3_4] ), [2], Left( cTpInsc, 1 ) ), SoNumeroCnpj( cNrInsc ) } )
+   AAdd( ::aAmbientes, { Iif( !( cLocalAmb $ [1_2] ), [1], Left( cLocalAmb, 1 ) ), Alltrim( Left( cDscSetor, 100 ) ), Iif( !( cTpInsc $ [1_3_4] ), [2], Left( cTpInsc, 1 ) ), fSoNumeroCnpj( cNrInsc ) } )
 RETURN Self
 
 METHOD SetAtividade( cDscAtivDes ) CLASS TEsocialEventoS2240
@@ -3198,7 +3198,7 @@ CLASS TEsocialLote
 ENDCLASS
 
 METHOD New( cCnpj, cGrupo ) CLASS TEsocialLote
-   ::cCnpj := SoNumeroCnpj( hb_DefaultValue( cCnpj, "" ) )
+   ::cCnpj := fSoNumeroCnpj( hb_DefaultValue( cCnpj, "" ) )
    ::cNrInscEmpregador := ::cCnpj
    ::cNrInscTransmissor := ::cCnpj
    IF ! Empty( cGrupo )
@@ -3208,12 +3208,12 @@ RETURN Self
 
 METHOD SetEmpregador( cTpInsc, cNrInsc ) CLASS TEsocialLote
    ::cTpInscEmpregador := AllTrim( cTpInsc )
-   ::cNrInscEmpregador := SoNumeroCnpj( cNrInsc )
+   ::cNrInscEmpregador := fSoNumeroCnpj( cNrInsc )
 RETURN Self
 
 METHOD SetTransmissor( cTpInsc, cNrInsc ) CLASS TEsocialLote
    ::cTpInscTransmissor := AllTrim( cTpInsc )
-   ::cNrInscTransmissor := SoNumeroCnpj( cNrInsc )
+   ::cNrInscTransmissor := fSoNumeroCnpj( cNrInsc )
 RETURN Self
 
 METHOD MontarXml( aEventosAssinados ) CLASS TEsocialLote
@@ -3223,7 +3223,7 @@ METHOD MontarXml( aEventosAssinados ) CLASS TEsocialLote
    cXml += '<eSocial xmlns="http://www.esocial.gov.br/schema/lote/eventos/envio/v1_1_1">'
    cXml += '<envioLoteEventos grupo="' + ::cGrupo + '">'
    cXml += '<ideEmpregador><tpInsc>' + ::cTpInscEmpregador + '</tpInsc><nrInsc>' + EsocialNrInscEmpregador( ::cTpInscEmpregador, ::cNrInscEmpregador ) + '</nrInsc></ideEmpregador>'
-   cXml += '<ideTransmissor><tpInsc>' + ::cTpInscTransmissor + '</tpInsc><nrInsc>' + SoNumeroCnpj( ::cNrInscTransmissor ) + '</nrInsc></ideTransmissor>'
+   cXml += '<ideTransmissor><tpInsc>' + ::cTpInscTransmissor + '</tpInsc><nrInsc>' + fSoNumeroCnpj( ::cNrInscTransmissor ) + '</nrInsc></ideTransmissor>'
    cXml += '<eventos>'
 
    FOR nI := 1 TO Len( aEventosAssinados )
@@ -4495,7 +4495,7 @@ RETURN "ID" + PadR( cBase, 34, "0" )
 
 FUNCTION EsocialNovoIdEvento( cTpInsc, cNrInsc )
    LOCAL cInsc, cSeq
-   cInsc := SoNumeroCnpj( cNrInsc )
+   cInsc := fSoNumeroCnpj( cNrInsc )
    IF AllTrim( cTpInsc ) == "1"
       cInsc := Left( cInsc, 8 ) + "000000"
    ELSE
@@ -4514,7 +4514,7 @@ FUNCTION EsocialXmlEscape( cText )
 RETURN cText
 
 FUNCTION EsocialNrInscEmpregador( cTpInsc, cNrInsc )
-   cNrInsc := SoNumeroCnpj( cNrInsc )
+   cNrInsc := fSoNumeroCnpj( cNrInsc )
    IF AllTrim( cTpInsc ) == "1" .AND. Len( cNrInsc ) > 8
       RETURN Left( cNrInsc, 8 )
    ENDIF
@@ -4533,7 +4533,7 @@ RETURN cSoNumeros
 FUNCTION DateXml(dDate)
 Return (Transf(Dtos(dDate), "@R 9999-99-99"))
 
-FUNCTION SoNumeroCnpj(cTxt)
+FUNCTION fSoNumeroCnpj(cTxt)
    Local cSoNumeros:= [], cChar
 
    For EACH cChar IN cTxt
