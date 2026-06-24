@@ -3430,7 +3430,6 @@ METHOD fCertificadoPfx(cCertificadoArquivo, cCertificadoSenha)
    Endif
 Return (Nil)
 
-
 METHOD New( cXml ) CLASS TEsocialRetornoOcorrencia
    ::cXml := hb_DefaultValue( cXml, "" )
    ::nTipo := Val( EsocialExtrairTag( ::cXml, "tipo" ) )
