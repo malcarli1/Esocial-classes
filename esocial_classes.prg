@@ -5,7 +5,7 @@
  * AUTOR    : Franklin Brasil                                                *
  * ALTERADO : Marcelo Antonio Lazzaro Carli                                  *
  * DATA     : 29.05.2026                                                     *
- * ULT. ALT.: 23.06.2026                                                     *
+ * ULT. ALT.: 26.06.2026                                                     *
  *****************************************************************************/
 #include "hbclass.ch"
 
@@ -101,6 +101,27 @@ CLASS TEsocialEventoS2220
    VAR cUfCRMRespMonit AS Character INIT ""
    VAR cCpfRespMonit   AS Character INIT ""
 
+   // Totvs - RM
+   VAR cCodEnti        AS Character INIT ""
+   VAR cCodCons        AS Character INIT ""
+   VAR cCodPes         AS Character INIT ""
+   VAR cChapa          AS Character INIT ""
+   VAR cCodMed         AS Character INIT ""
+   VAR cCodCon         AS Character INIT ""
+   VAR cObs            AS Character INIT ""
+   VAR cCodCid         AS Character INIT ""
+   VAR cExRefe         AS Character INIT ""
+   VAR cAtivoO         AS Character INIT ""
+   VAR cResul          AS Character INIT ""
+   VAR cTipoA          AS Character INIT ""
+   VAR cDescA          AS Character INIT ""
+   VAR cObser          AS Character INIT ""
+   VAR cCodLau         AS Character INIT ""
+   VAR cCamTeL         AS Character INIT ""
+   VAR cCamNum         AS Character INIT ""
+   VAR cCamTex         AS Character INIT ""
+   VAR cCamTab         AS Character INIT ""
+
    METHOD New()
    METHOD SetId()          // cId 
    METHOD SetAmbiente()    // cTpAmb
@@ -112,6 +133,13 @@ CLASS TEsocialEventoS2220
    METHOD SetMedico()      // cNmMed, cNrCRM, cUfCRM 
    METHOD SetRespMonit()   // cNmResp, cNrCRM, cUfCRM, cCpfResp 
    METHOD ToXml()
+   
+   // Totvs - RM
+   METHOD SetConsulta()          // nCodEnti, cCodPes, cChapa, cCodMed, cTpExameOcup, cCodCon, dDtAso, cResAso, cObs ) CLASS TEsocialEventoS2220
+   METHOD SetExameRm()           // nProcRealizado, cCodCid, cExRefe, cAtivoO, nResul, nTipoA, cDescA, cObser, cCodLau, cCamTeL, cCamNum, cCamTex, cCamTab ) CLASS TEsocialEventoS2220
+   METHOD AddExameRm()           // nProcRealizado, cCodCid, cExRefe, cAtivoO, nResul, nTipoA, cDescA, cObser, cCodLau, cCamTeL, cCamNum, cCamTex, cCamTab )
+   METHOD ToXmlRm()
+   METHOD FormatareSalvarXmlRm() // cArquivo, cEventos
 ENDCLASS
 
 METHOD New() CLASS TEsocialEventoS2220
@@ -257,6 +285,120 @@ METHOD ToXml() CLASS TEsocialEventoS2220
    ENDIF
    cXml += '</exMedOcup></evtMonit></eSocial>'
 RETURN cXml
+
+METHOD SetConsulta( nCodEnti, cCodPes, cChapa, cCodMed, cTpExameOcup, cCodCon, dDtAso, cResAso, cObs ) CLASS TEsocialEventoS2220
+   ::cCodEnti     := OnlyDigits( Strzero( nCodEnti, 5 ) )
+   ::cCodCons     := Strzero( Random( 9999999999 ), 10 )
+   ::cCodPes      := Alltrim( Left( OnlyDigits( cCodPes ), 8 ) )
+   ::cChapa       := Alltrim( Left( OnlyDigits( cChapa ), 6 ) )
+   ::cCodMed      := Alltrim( Left( OnlyDigits( cCodMed ), 3 ) )
+   ::cTpExameOcup := Iif( !( cTpExameOcup $ [0_1_2_3_4_9] ), [0], Left( cTpExameOcup, 1 ) )
+   ::cCodCon      := Iif( !( Upper( cCodCon )  $ [A_P_R_M_B_D] ), [P], Left( Upper( cCodCon ), 1 ) )
+   ::cDtAso       := Dtoc( dDtAso )
+   ::cResAso      := Iif( !( cResAso $ [0_1] ), [1], Left( cResAso, 1 ) )
+   ::cObs         := AllTrim( hb_DefaultValue(  cObs, "" ) )
+RETURN Self
+
+METHOD SetExameRm( nProcRealizado, cCodCid, cExRefe, cAtivoO, cResul, cTipoA, cDescA, cObser, cCodLau, cCamTeL, cCamNum, cCamTex, cCamTab ) CLASS TEsocialEventoS2220
+   ::aExames := {}
+RETURN ::AddExameRm( nProcRealizado, cCodCid, cExRefe, cAtivoO, cResul, cTipoA, cDescA, cObser, cCodLau, cCamTeL, cCamNum, cCamTex, cCamTab )
+
+METHOD AddExameRm( nProcRealizado, cCodCid, cExRefe, cAtivoO, cResul, cTipoA, cDescA, cObser, cCodLau, cCamTeL, cCamNum, cCamTex, cCamTab ) CLASS TEsocialEventoS2220
+   ::cProcRealizado := Alltrim( Left( OnlyDigits( hb_Ntos( nProcRealizado ) ), 4 ) )
+   ::cCodCid        := Left( Upper(AllTrim( hb_DefaultValue( cCodCid, "" ) ) ), 4 )
+   ::cExRefe        := Iif( !( cExRefe  $ [0_1] )  , [0], Left( cExRefe, 1 ) )
+   ::cAtivoO        := Iif( !( cAtivoO  $ [0_1] )  , [0], Left( cAtivoO, 1 ) )
+   ::cResul         := Iif( !( cResul   $ [0_1] )  , [0], Left( cResul, 1 ) )
+   ::cTipoA         := Iif( !( cTipoA   $ [0_1_X] ), [0], Left( cTipoA, 1 ) )
+   ::cDescA         := AllTrim( hb_DefaultValue(  cDescA, "" ) )
+   ::cObser         := AllTrim( hb_DefaultValue(  cObser, "" ) )
+   ::cCodLau        := AllTrim( hb_DefaultValue(  cCodLau, "" ) )
+   ::cCamTeL        := AllTrim( hb_DefaultValue(  cCamTeL, "" ) )
+   ::cCamNum        := AllTrim( hb_DefaultValue(  cCamNum, "" ) )
+   ::cCamTex        := AllTrim( hb_DefaultValue(  cCamTex, "" ) )
+   ::cCamTab        := AllTrim( hb_DefaultValue(  cCamTab, "" ) )
+
+   AAdd( ::aExames, { ::cProcRealizado, ::cCodCid, ::cExRefe, ::cAtivoO, ::cResul, ::cTipoA, ::cDescA, ::cObser, ::cCodLau, ::cCamTeL, ::cCamNum, ::cCamTex, ::cCamTab } )
+RETURN Self
+
+METHOD ToXmlRm() CLASS TEsocialEventoS2220
+   LOCAL cXml:= [], nI, aExame
+
+   IF Len( ::aExames ) == 0
+       ::AddExameRm( ::nProcRealizado, ::cCodCid, ::cExRefe, ::cAtivoO, ::cResul, ::cTipoA, ::cDescA, ::cObser, ::cCodLau, ::cCamTeL, ::cCamNum, ::cCamTex, ::cCamTab )
+   ENDIF
+
+   cXml += '<CONSULTA>'                                                                        // abre a tag
+     fTag_Xml(@cXml, [IDCONSULTA], [])                                                            // IDCONSULTA: É o identificador da consulta (VCONSULTASPRONT.IDCONSULTA), um código que não pode se repetir. 
+                                                                                                  // Se este campo estiver em branco, uma consulta é criada para cada exame informado. Entretanto, se este campo estiver preenchido, o processo de importação de exames não criará uma consulta, mas apenas irá adicionar os exames à consulta cujo o “idConsulta” seja correspondente ao informado no XML.
+     fTag_Xml(@cXml, [CODENTIDADE], ::cCodEnti)                                                   // CODENTIDADE: É o código da entidade relacionada ao exame. Deve ser preenchido com o código de uma entidade cadastrada no sistema (RM | Gestão de Pessoas | Desenvolvimento | Entidades). Preenchimento obrigatório.
+     fTag_Xml(@cXml, [CODCONSULTA], ::cCodCons)                                                   // CODCONSULTA: É o código da consulta (VCONSULTASPRONT.CODCONSULTAPRONT), deve ser preenchido com um valor que garanta a unicidade das consultas contidas no arquivo. Preenchimento obrigatório.
+     fTag_Xml(@cXml, [CODPESSOA], ::cCodPes)                                                      // CODPESSOA: É o código da pessoa a qual a consulta pertence. Deve ser preenchido com o valor do código de uma pessoa cadastrada no sistema (RM | Segurança e Medicina do Trabalho | Cadastros | Pessoas), caso o valor informado não esteja cadastrado, não será possível concluir o processo e o sistema retornará uma mensagem ao usuário. Preenchimento obrigatório.
+     fTag_Xml(@cXml, [CHAPA], ::cChapa)                                                           // CHAPA: Permite identificar qual funcionário se encontra vinculado ao prontuário .A informação será visualizada no campo"Funcionário". Esse campo será utilizado no leiaute do eSocial evento S-2220 -Monitoramento da Saúde do Trabalhador .
+     fTag_Xml(@cXml, [CODMEDICO], ::cCodMed)                                                      // CODMEDICO: É o código do médico responsável pela realização da consulta. Deve ser preenchido com o valor do código de um profissional de saúde cadastrado no sistema (RM | Segurança e Medicina do Trabalho | Cadastros | Profissional de Saúde). Caso o valor informado não esteja cadastrado, não será possível concluir o processo e o sistema retornará uma mensagem ao usuário. Preenchimento opcional.
+     fTag_Xml(@cXml, [CODTIPOCONSULTA], ::cTpExameOcup)                                           // CODTIPOCONSULTA: É o código do tipo da consulta. Deve ser preenchido com um valor cadastrado em uma tabela dinâmica do sistema. Preenchimento obrigatório.
+     fTag_Xml(@cXml, [CODTIPOCONSULTAESOCIAL], ::cCodCon)                                         // CODTIPOCONSULTAESOCIAL: É o código do tipo da consulta e-social. Deve ser preenchido com um valor cadastrado em uma tabela dinâmica do sistema. Preenchimento opcional.
+     fTag_Xml(@cXml, [DATACONSULTA], ::cDtAso)                                                    // DATACONSULTA: É a data da realização da consulta. Deve ser preenchido no formato dd/mm/aaaa. Preenchimento obrigatório
+     fTag_Xml(@cXml, [APTO], ::cResAso)                                                           // APTO: Indica a situação final da consulta realizada. Deve ser preenchido com os valores 1, 2 ,3 ou 4 (1 = Apto, 2 = Inapto, 3 = Apto com Restrição, 4 = Pendente). Preenchimento obrigatório.
+     fTag_Xml(@cXml, [DATAASO], ::cDtAso)                                                         // DATAASO: Campo para preenchimento do campo data aso no cadastro da consulta. Seu preenchimento é obrigatorio para a geração do ASO e também para a geração do gatilho do evento S-2220.
+     fTag_Xml(@cXml, [OBSERVACAO], EsocialXmlEscape( ::cObs ))                                    // OBSERVACAO: Campo para preenchimento de eventuais observações existentes na consulta. Preenchimento opcional.
+   cXml += '</CONSULTA>'                                                                       // fecha a tag
+
+   FOR nI := 1 TO Len( ::aExames )
+      aExame := ::aExames[ nI ]
+
+      cXml += '<RESULTADO>'                                                                    // abre a tag
+        fTag_Xml(@cXml, [IDCONSULTA], [])                                                         // IDCONSULTA: É o identificador da consulta (VCONSULTASPRONT.IDCONSULTA), um código que não pode se repetir.
+                                                                                                  // Se este campo estiver em branco, uma consulta é criada para cada exame informado. Entretanto, se este campo estiver preenchido, o processo de importação de exames não criará uma consulta, mas apenas irá adicionar os exames à consulta cujo o “idConsulta” seja correspondente ao informado no XML.
+        fTag_Xml(@cXml, [CODCONSULTA], ::cCodCons)                                                // CODCONSULTA: É o código da consulta à qual o exame em questão está relacionado, deve ser preenchido com o valor de uma das consultas existentes no arquivo. Caso o valor informado não seja localizado nas consultas do arquivo, não será possível concluir o processo. Preenchimento obrigatório.
+        fTag_Xml(@cXml, [CODPESSOA], ::cCodPes)                                                   // CODPESSOA: É o código da pessoa a qual a consulta pertence. Deve ser preenchido com o valor do código de uma pessoa cadastrada no sistema (RM | Segurança e Medicina do Trabalho | Cadastros | Pessoas), caso o valor informado não esteja cadastrado, não será possível concluir o processo e o sistema retornará uma mensagem ao usuário. Preenchimento obrigatório.
+        fTag_Xml(@cXml, [EXAME], aExame[ 1 ])                                                     // EXAME: É o identificador que relacionará os exames do arquivo aos exames do sistema (Ex.: 001 = Hemograma, 002 = Audiometria). Pode ser preenchido com qualquer valor, garantindo que todos os exames relacionados a um mesmo exame do sistema possuam sempre o mesmo valor, por exemplo: Se um exame de Hemograma é preenchido com valor “001” nesta tag, então todos os exames do arquivo que forem Hemograma também deverão ser preenchidos com o valor “001”. Este campo será utilizado para ordenar a exibição dos exames na tela de relacionamento dos campos. Preenchimento obrigatório.
+        fTag_Xml(@cXml, [TIPOEXAME], ::cCodCon)                                                   // TIPOEXAME: É o tipo do exame, deve ser preenchido com um dos valores a seguir: A, D, I, M, P ou R (A = Admissional; D = Demissional; I = Não informado, M = Mudança de Riscos Ocupacionais, P = Periódico, R = Retorno ao Trabalho). Preenchimento opcional.
+        fTag_Xml(@cXml, [CID], aExame[ 2 ])                                                       // CID: É o código da doença presente no exame. Deve ser preenchido com o código de uma doença cadastrada no sistema (RM | Segurança e Medicina do Trabalho |PCMSO | CID). Preenchimento opcional.
+        fTag_Xml(@cXml, [CODENTIDADE], ::cCodEnti)                                                // CODENTIDADE: É o código da entidade relacionada ao exame. Deve ser preenchido com o código de uma entidade cadastrada no sistema (RM | Gestão de Pessoas | Desenvolvimento | Entidades). Preenchimento obrigatório.
+        fTag_Xml(@cXml, [DATAEXAME], ::cDtAso)                                                    // Data do exame realizado. Validação: Deve ser uma data igual ou anterior à data do ASO informada em {dtAso}.
+
+        If Val( aExame[ 1 ] ) == 281                                                              // Audiometria NT 03.2021
+           fTag_Xml(@cXml, [EXAMEREFERENCIAL], aExame[ 3 ])                                       // Ordem do Exame: 1 - Referencial; 0 - Sequencial. Valores Válidos: 1, 0.
+        Endif
+
+        fTag_Xml(@cXml, [ATIVOOCUPACIONAL], aExame[ 4 ]) 
+        fTag_Xml(@cXml, [RESULTNORMAL], aExame[ 5 ])                                              // Indicação dos Resultados: 0 - Normal; 1 - Anormal. Valores Válidos: 0, 1
+
+        If aExame[ 6 ] # "X"
+           fTag_Xml(@cXml, [TIPOANORMALIDADE], aExame[ 6 ])                                       // TIPOANORMALIDADE: Indica o tipo da anormalidade (0 = Estável, 1 = Agravamento). Preenchimento opcional.
+        Endif
+
+        fTag_Xml(@cXml, [APTO], ::cResAso)                                                        // APTO: É o resultado do exame, indica se o funcionário/pessoa está apto ou não (0 = Não, 1 = Sim). Preenchimento opcional.
+        fTag_Xml(@cXml, [DESCANORMAL], aExame[ 7 ])                                               // DESCANORMAL: É a descrição da anormalidade, campo para digitação de texto. Preenchimento opcional.
+
+        If Val(aExame[ 1 ]) == 583  .or. Val(aExame[ 1 ]) == 998  .or. Val(aExame[ 1 ]) == 999  .or. Val(aExame[ 1 ]) == 1128 .or. Val(aExame[ 1 ]) == 1230 .or. Val(aExame[ 1 ]) == 1992 .or. Val(aExame[ 1 ]) == 1993 .or. ; // NT 03.2021
+           Val(aExame[ 1 ]) == 1994 .or. Val(aExame[ 1 ]) == 1995 .or. Val(aExame[ 1 ]) == 1996 .or. Val(aExame[ 1 ]) == 1997 .or. Val(aExame[ 1 ]) == 1998 .or. Val(aExame[ 1 ]) == 1999 .or. Val(aExame[ 1 ]) == 9999 
+           fTag_Xml(@cXml, [OBSERVACAO], EsocialXmlEscape( aExame[ 8 ] ))                         // OBSERVACAO: Campo para preenchimento de eventuais observações existentes no exame. Preenchimento opcional.
+        Endif
+
+        fTag_Xml(@cXml, [CODLAUDOEXAME], aExame[ 9 ])                                             // CODLAUDOEXAME: Campo destinado ao preenchimento do número do laudo do exame toxicológico(padrão Denatran) . Esse campo é necessário para a geração correta do evento S-2221.
+        fTag_Xml(@cXml, [CODPROCEDMENTO], StrZero( Val( aExame[ 1 ] ), 4 ))                       // CODPROCEDMENTO: Campo para preenchimento do código de procedimento utilizado para realização do exame. Deve ser um código existente na tabela 27 (Procedimentos Diagnósticos) do eSocial. Esse campo é obrigatorio para a geração do evento S-2220 do eSocial.
+        fTag_Xml(@cXml, [CAMPOTEXTOLONGO], EsocialXmlEscape( aExame[ 10 ] ))  
+        fTag_Xml(@cXml, [CAMPONUMERICO], EsocialXmlEscape( aExame[ 11 ] ))
+        fTag_Xml(@cXml, [CAMPOTEXTO], EsocialXmlEscape( aExame[ 12 ] ))
+        fTag_Xml(@cXml, [CAMPOTABDINAM], EsocialXmlEscape(aExame[ 13 ] ))
+     cXml += '</RESULTADO>'                                                                    // fecha a tag
+   Next
+RETURN cXml
+
+METHOD FormatareSalvarXmlRm( cArquivo, cEventos ) CLASS TEsocialEventoS2220
+   LOCAL lRet := .F.
+
+   IF !Empty( cArquivo ) .AND. !Empty( cEventos )
+      cEventos := StrTran( cEventos, '<CONSULTA>', '<?xml version="1.0" encoding="ISO-8859-1" ?><REGISTRO><CONSULTA>', 1, 1 )
+      cEventos += '</REGISTRO>'
+
+      IF hb_MemoWrit( cArquivo, cEventos )
+         lRet := .T.
+      ENDIF
+   ENDIF
+RETURN lRet
 
 CLASS TEsocialEventoS3000 FROM TEsocialEventoS2220
    VAR cTpEvento   AS Character INIT "S-2220"
@@ -3190,11 +3332,11 @@ CLASS TEsocialLote
    VAR cNrInscTransmissor AS Character INIT ""
    VAR cGrupo             AS Character INIT "2"
 
-   METHOD New()            // cCnpj, cGrupo 
-   METHOD SetEmpregador()  // cTpInsc, cNrInsc 
-   METHOD SetTransmissor() // cTpInsc, cNrInsc 
-   METHOD MontarXml()      // aEventosAssinados 
-   METHOD Salvar()         // aEventosAssinados, cArquivo 
+   METHOD New()                   // cCnpj, cGrupo 
+   METHOD SetEmpregador()         // cTpInsc, cNrInsc 
+   METHOD SetTransmissor()        // cTpInsc, cNrInsc 
+   METHOD MontarXml()             // aEventosAssinados 
+   METHOD Salvar()                // aEventosAssinados, cArquivo 
 ENDCLASS
 
 METHOD New( cCnpj, cGrupo ) CLASS TEsocialLote
@@ -4559,6 +4701,59 @@ Static Function CertNativeToken(cDados, nToken)
       Return SubStr(cDados, nStart)
    Endif
 Return SubStr(cDados, nStart, nPos - 1)
+
+Static Function fTag_Xml(cXml, cTag, xValue, nDecimals, lConvert)
+   Local cRetorno:= []
+
+   hb_Default(@cXml     , [])
+   hb_Default(@xValue   , [])
+   hb_Default(@lConvert , .T.)
+   hb_Default(@nDecimals, 2)
+
+   xValue:= Rtrim(xValue)
+
+   If lConvert
+      If ValType(xValue) == "D"
+         xValue:= DateXml(xValue)
+      Elseif ValType(xValue) == "N"
+         xValue:= NumberXml(xValue, nDecimals)
+      Else
+         xValue:= StringXML(xValue)
+      EndIf
+   EndIf
+
+   If Len(xValue) == 0
+      cRetorno:= "<" + cTag + "/>"
+   Else
+      cRetorno:= "<" + cTag + ">" + xValue + "</" + cTag + ">"
+   EndIf
+
+   cXml += cRetorno
+Return (cRetorno)
+
+Static Function NumberXml(nValue, nDecimals)
+   hb_Default(@nDecimals, 0)
+
+   If nValue < 0
+      nValue:= 0
+   EndIf
+Return (Ltrim(Str(nValue, 16, nDecimals)))
+
+Static Function StringXML(cTexto)
+   cTexto:= AllTrim(cTexto)
+
+   Do While Space(2) $ cTexto
+      cTexto:= StrTran(cTexto, Space(2), Space(1))
+   Enddo
+
+   cTexto:= StrTran(cTexto, "&", "E")
+   cTexto:= StrTran(cTexto, ["], "&quot;")
+   cTexto:= StrTran(cTexto, "'", "&#39;")
+   cTexto:= StrTran(cTexto, "<", "&lt;")
+   cTexto:= StrTran(cTexto, ">", "&gt;")
+   cTexto:= StrTran(cTexto, "º", "&#176;")
+   cTexto:= StrTran(cTexto, "ª", "&#170;")
+Return (cTexto)
 
 #pragma BEGINDUMP
 
