@@ -5,7 +5,7 @@
  * AUTOR    : Franklin Brasil                                                *
  * ALTERADO : Marcelo Antonio Lazzaro Carli                                  *
  * DATA     : 29.05.2026                                                     *
- * ULT. ALT.: 26.06.2026                                                     *
+ * ULT. ALT.: 03.07.2026                                                     *
  *****************************************************************************/
 #include "hbclass.ch"
 
@@ -3327,7 +3327,7 @@ ENDCLASS
 CLASS TEsocialLote
    VAR cCnpj              AS Character INIT ""
    VAR cTpInscEmpregador  AS Character INIT "1"
-   VAR cNrInscEmpregador  AS Character INIT ""
+   var cNrInscEmpregador  AS Character INIT ""
    VAR cTpInscTransmissor AS Character INIT "1"
    VAR cNrInscTransmissor AS Character INIT ""
    VAR cGrupo             AS Character INIT "2"
@@ -3341,8 +3341,10 @@ ENDCLASS
 
 METHOD New( cCnpj, cGrupo ) CLASS TEsocialLote
    ::cCnpj := fSoNumeroCnpj( hb_DefaultValue( cCnpj, "" ) )
-   ::cNrInscEmpregador := ::cCnpj
+   ::cNrInscEmpregador  := ::cCnpj
+   ::cTpInscEmpregador  := IIf(Len(::cCnpj) == 14, "1", "2")
    ::cNrInscTransmissor := ::cCnpj
+   ::cTpInscTransmissor := IIf(Len(::cCnpj) == 14, "1", "2")
    IF ! Empty( cGrupo )
       ::cGrupo := AllTrim( cGrupo )
    ENDIF
