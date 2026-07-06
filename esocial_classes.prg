@@ -1,3 +1,5 @@
+* linkar com essas libs => C:\Borland\bcc58\Lib\PSDK\crypt32.lib;C:\Borland\bcc58\Lib\PSDK\advapi32.lib;C:\Borland\bcc58\Lib\PSDK\cryptui.lib;
+* https://github.com/malcarli1/Esocial-classes
 /*****************************************************************************
  * SISTEMA  : SISTEMA DE GESTÃO OCUPACIONAL                                  *
  * PROGRAMA : ESOCIAL_CLASSES.PRG                                            *
@@ -5,7 +7,7 @@
  * AUTOR    : Franklin Brasil                                                *
  * ALTERADO : Marcelo Antonio Lazzaro Carli                                  *
  * DATA     : 29.05.2026                                                     *
- * ULT. ALT.: 03.07.2026                                                     *
+ * ULT. ALT.: 06.07.2026                                                     *
  *****************************************************************************/
 #include "hbclass.ch"
 
@@ -41,17 +43,17 @@ METHOD New() CLASS TEsocialConfig
 RETURN Self
 
 METHOD UseProducao() CLASS TEsocialConfig
-   ::cEnvioUrl := ESOCIAL_URL_ENVIO_PRODUCAO
+   ::cEnvioUrl    := ESOCIAL_URL_ENVIO_PRODUCAO
    ::cConsultaUrl := ESOCIAL_URL_CONSULTA_PRODUCAO
 RETURN Self
 
 METHOD UseProducaoRestrita() CLASS TEsocialConfig
-   ::cEnvioUrl := ESOCIAL_URL_ENVIO_RESTRITA
+   ::cEnvioUrl    := ESOCIAL_URL_ENVIO_RESTRITA
    ::cConsultaUrl := ESOCIAL_URL_CONSULTA_RESTRITA
 RETURN Self
 
 METHOD UseMockLocal() CLASS TEsocialConfig
-   ::cEnvioUrl := "http://127.0.0.1:8088/servicos/empregador/enviarloteeventos/WsEnviarLoteEventos.svc"
+   ::cEnvioUrl    := "http://127.0.0.1:8088/servicos/empregador/enviarloteeventos/WsEnviarLoteEventos.svc"
    ::cConsultaUrl := "http://127.0.0.1:8088/servicos/empregador/consultarloteeventos/WsConsultarLoteEventos.svc"
 RETURN Self
 
@@ -2162,6 +2164,7 @@ CLASS TEsocialEventoConsolidContProc FROM TEsocialEventoXml
    METHOD New()
    METHOD SetConsolidacao()
 ENDCLASS
+
 METHOD New() CLASS TEsocialEventoConsolidContProc
    ::Super:New( "evtConsolidContProc", "evtConsolidContProc" )
 RETURN Self
@@ -2752,6 +2755,7 @@ CLASS TEsocialEventoTabProcesso FROM TEsocialEventoXml
    METHOD SetDadosProcJud()
    METHOD SetInfoSusp()
 ENDCLASS
+
 METHOD New() CLASS TEsocialEventoTabProcesso
    ::Super:New( "evtTabProcesso", "evtTabProcesso" )
 RETURN Self
