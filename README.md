@@ -82,3 +82,14 @@ O objetivo principal desta classe é acrescentar uma alternativa técnica e grat
 
 📄 Licença
 Este projeto está sob a licença MIT - consulte o arquivo LICENSE para obter detalhes. Você está livre para usar, modificar e distribuir comercialmente esta ponte criptográfica.
+
+<div align="center">
+
+<b>Marcelo A. L. Carli</b><br>
+Malc Informática — Gestão em Saúde Ocupacional<br>
+📍 Marília/SP — Capital Nacional do Alimento ®<br>
+🌐 <a href="https://malc-informatica.ueniweb.com" target="_blank">malc-informatica.ueniweb.com</a><br>
+📧 <a href="mailto:marceloalcarli@gmail.com">marceloalcarli@gmail.com</a><br>
+📱 Instagram: <a href="https://instagram.com/malcarli25" target="_blank">@malcarli25</a>
+
+</div>
