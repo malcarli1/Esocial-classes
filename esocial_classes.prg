@@ -7,7 +7,7 @@
  * AUTOR    : Franklin Brasil                                                *
  * ALTERADO : Marcelo Antonio Lazzaro Carli                                  *
  * DATA     : 29.05.2026                                                     *
- * ULT. ALT.: 06.07.2026                                                     *
+ * ULT. ALT.: 14.08.2026                                                     *
  *****************************************************************************/
 #include "hbclass.ch"
 
@@ -202,11 +202,15 @@ METHOD AddExame( cDtExm, cProcRealizado, cIndResult, cObsProc, cOrdExame ) CLASS
    IF cIndResult != Nil
       ::cIndResult := Iif( !( cIndResult $ [1_2_3_4] ), [1], Left( cIndResult, 1 ) )
    ENDIF
-   IF cObsProc != Nil .or. cObsProc == [0583] .or. cObsProc == [0998] .or. cObsProc == [0999] .or. cObsProc == [1128] .or. cObsProc == [1230] .or. cObsProc == [1992] .or. cObsProc == [1993] .or. cObsProc == [1994] .or. cObsProc == [1995] .or. cObsProc == [1996] .or. cObsProc == [1997] .or. cObsProc == [1998] .or. cObsProc == [1999] .or. cObsProc == [9999]
+   IF cObsProc == [0583] .or. cObsProc == [0998] .or. cObsProc == [0999] .or. cObsProc == [1128] .or. cObsProc == [1230] .or. cObsProc == [1992] .or. cObsProc == [1993] .or. cObsProc == [1994] .or. cObsProc == [1995] .or. cObsProc == [1996] .or. cObsProc == [1997] .or. cObsProc == [1998] .or. cObsProc == [1999] .or. cObsProc == [9999]  // cObsProc != Nil .or. 
       ::cObsProc := Alltrim( Left( cObsProc, 999 ) )
+   Else
+      ::cObsProc := []
    ENDIF
-   IF cOrdExame != Nil .and. cProcRealizado = [0281]
+   IF cProcRealizado == [0281]  // cOrdExame != Nil .and. cProcRealizado == [0281]
       ::cOrdExame := Iif( !( cOrdExame $ [1_2] ), [1], Left( cOrdExame, 1 ) )
+   Else
+      ::cOrdExame := []
    ENDIF
    AAdd( ::aExames, { ::cDtExm, ::cProcRealizado, ::cIndResult, ::cObsProc, ::cOrdExame } )
 RETURN Self
